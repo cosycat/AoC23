@@ -13,9 +13,8 @@ public class Day01 {
             var a = -1;
             var b = -1;
             for (int i = 0; i < line.Length; i++) {
-                var c = line[i];
-                if (c is >= '0' and <= '9') {
-                    var n = int.Parse($"{c}");
+                var n = ParseNumber(line, i);
+                if (n != -1) {
                     if (a == -1) a = n;
                     b = n;
                 }
@@ -29,4 +28,22 @@ public class Day01 {
         
     }
     
+    private static readonly List<string> Digits = new() { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+
+    private static int ParseNumber(string line, int i) {
+        if (line[i] is >= '0' and <= '9') return int.Parse($"{line[i]}");
+        for (var digitIndex = 0; digitIndex < Digits.Count; digitIndex++) {
+            var digit = Digits[digitIndex];
+            if (line.Length - i < digit.Length) continue;
+            var fits = true;
+            for (int j = 0; j < digit.Length && fits; j++) {
+                if (line[i + j] != digit[j])
+                    fits = false;
+            }
+
+            if (fits) return digitIndex + 1;
+        }
+
+        return -1;
+    }
 }

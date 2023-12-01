@@ -1,6 +1,6 @@
 namespace _01; 
 
-public class Day01 {
+public static class Day01 {
 
     public static void Main(string[] args) {
         var allLines = File.ReadAllLines("input.txt").ToList();

@@ -11,26 +11,23 @@ public static class Day24Year22 {
 
         Console.WriteLine("parsed input");
 
-        var states = new PriorityQueue<((int x, int y, int steps) state, List<(int x, int y, int steps)> prevSteps), int>();
-        states.Enqueue(((g.StartX, 0, 0), new List<(int x, int y, int steps)>()), 0);
+        PriorityQueue<(int x, int y, int steps), int> states = new PriorityQueue<(int x, int y, int steps), int>();
+        states.Enqueue((g.StartX, 0, 0), 0);
+
+        var totalCount = 0;
         while (states.Count > 0) {
-            var (state, prevStates) = states.Dequeue();
-            
-            var newPrevStates = new List<(int x, int y, int steps)>();
-            newPrevStates.AddRange(prevStates);
-            newPrevStates.Add((state.x, state.y, state.steps));
+            var state = states.Dequeue();
+            totalCount++;
+            if (totalCount % 100000 == 0) Console.WriteLine($"total count: {totalCount}, current state: {state}");
             
             foreach (var nextState in g.GetValidNextStates(state)) {
+                Debug.Assert(nextState.steps == state.steps + 1, $"nextState.steps: {nextState.steps}, state.steps: {state.steps}");
                 if (nextState.y == g.Height - 1) {
                     Console.WriteLine($"Minimum count of steps: {nextState.steps}");
-                    foreach (var (x, y, steps) in newPrevStates) {
-                        g.PrintState((x, y, steps));
-                        Console.WriteLine();
-                    }
                     return;
                 }
                 
-                states.Enqueue((nextState, newPrevStates), g.GetMinNumberOfSteps(nextState));
+                states.Enqueue(nextState, g.GetMinNumberOfSteps(nextState));
             }
         }
 

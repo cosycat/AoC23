@@ -13,13 +13,15 @@ public static class Day02 {
         const string gamePattern = $@"Game \d+:(?'Draws'{colorPattern}+;?)+";
         Console.WriteLine($"Regex: {gamePattern}");
         
-        var solution = 0;
+        var solution1 = 0; // Game numbers of possible games added together
+        var solution2 = 0; // Power of min colors of all games multiplied together
 
         for (var i = 0; i < allLines.Count; i++) {
             // GAME
             var game = allLines[i];
             var gameNumber = i + 1;
             var isGamePossible = true;
+            var minColors = new []{0, 0, 0};
             
             // var pattern = @"Game \d+:(?'Draws'(?'Color'\s\d+\s\w+,?)+;?)+";
             var match = Regex.Match(game, gamePattern);
@@ -46,14 +48,25 @@ public static class Day02 {
                         Console.WriteLine($"      {colorGroup.Value} {number} is too many");
                         isGamePossible = false;
                     }
+                    var colorIndex = colorGroup.Value switch {
+                        "red" => 0,
+                        "green" => 1,
+                        "blue" => 2,
+                        _ => throw new ArgumentOutOfRangeException(nameof(colorGroup), colorGroup.Value, null)
+                    };
+                    minColors[colorIndex] = Math.Max(minColors[colorIndex], number);
                 }
             }
             
             Console.WriteLine($"game {gameNumber} is {(isGamePossible ? "possible" : "impossible")}");
-            if (isGamePossible) solution += gameNumber;
+            if (isGamePossible) solution1 += gameNumber;
+            
+            Console.WriteLine($"min colors: {string.Join(", ", minColors)}");
+            solution2 += minColors.Aggregate(1, (acc, x) => acc * x);
         }
         
-        Console.WriteLine($"solution: {solution}");
+        Console.WriteLine($"solution1: {solution1}");
+        Console.WriteLine($"solution2: {solution2}");
     }
     
     public static bool IsTooManyColors(string color, int number) => color switch {

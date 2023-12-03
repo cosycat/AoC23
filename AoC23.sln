@@ -12,7 +12,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "03", "03\03.csproj", "{3181
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "04", "04\04.csproj", "{2A79D3E7-92D4-44C0-9838-3818BF196075}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Templates", "Templates\Templates.csproj", "{764AC558-5E4C-40D5-87E6-C1336F7EED52}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AoCTemplate", "AoCTemplate\AoCTemplate.csproj", "{764AC558-5E4C-40D5-87E6-C1336F7EED52}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

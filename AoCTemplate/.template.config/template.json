@@ -1,0 +1,64 @@
+{
+  "author": "Flavia Brogle",
+  "name": "Advent of Code Daily Puzzle Project",
+  "description": "A project for creating a command-line application that can be used to solve Advent of Code puzzles in C#.",
+  "identity": "FlaviaBrogle.AoCDailyPuzzle",
+  "shortName": "AoC",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sources": {
+    "rename": {
+      "Dayxx.cs": "(FileName)",
+      "inputDayxx.txt": "Day(Day).txt"
+    }
+  },
+  "sourceName": "XX",
+  "symbols": {
+    "Day": {
+      "type": "parameter",
+      "description": "The day of the puzzle.",
+      "defaultValue": "XX",
+      "replaces": "xx",
+      "fileRename": "xx",
+      "datatype": "string"
+    },
+    "ResultType" : {
+      "type": "parameter", 
+      "description": "The type of the expected result.",
+      "defaultValue": "int",
+      "replaces": "/*resultType*/int",
+      "datatype": "string"
+    },
+    "InputReadMethod": {
+      "type": "parameter",
+      "description": "How the input should be read. (not currently used)",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "LineByLineArray",
+          "description": "Reads the input line by line and stores it in a string array."
+        },
+        {
+          "choice": "LineByLineList",
+          "description": "Reads the input line by line and stores it in a string list."
+        }
+      ],
+      "defaultValue": "LineByLine",
+      "replaces":"InputReadMethod"
+    },
+    "LineByLineArray": {
+      "type": "computed",
+      "value": "(InputReadMethod == \"LineByLineArray\")"
+    },
+    "LineByLineList": {
+      "type": "computed",
+      "value": "(InputReadMethod == \"LineByLineList\")"
+    },
+    "FileName": {
+      "type": "computed",
+      "value": "Day(Day).cs"
+    }
+  }
+}

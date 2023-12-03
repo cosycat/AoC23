@@ -1,31 +1,56 @@
 {
   "author": "Flavia Brogle",
-  "name": "Advent of Code Daily Puzzle Project",
+  "name": "AoCDailyPuzzle",
   "description": "A project for creating a command-line application that can be used to solve Advent of Code puzzles in C#.",
   "identity": "FlaviaBrogle.AoCDailyPuzzle",
   "shortName": "AoC",
+  "sourceName": "AoCTemplate",
+  "preferNameDirectory": true,
   "tags": {
     "language": "C#",
     "type": "project"
   },
-  "sources": {
-    "rename": {
-      "Dayxx.cs": "(FileName)",
-      "inputDayxx.txt": "Day(Day).txt"
-    }
-  },
-  "sourceName": "XX",
   "symbols": {
+    "Framework": {
+      "type": "parameter",
+      "description": "The target framework for the project.",
+      "defaultValue": "net7.0",
+      "datatype": "string"
+    },
+    "UseToday": {
+      "type": "computed",
+      "value": false
+    },
+    "CurrentDay": {
+      "isEnabled": "false",
+      "type": "generated",
+      "generator": "now",
+      "parameters": {
+        "format": "dd"
+      },
+      "datatype": "string",
+      "replaces": "xx",
+      "fileRename": "xx"
+    },
     "Day": {
       "type": "parameter",
       "description": "The day of the puzzle.",
-      "defaultValue": "XX",
+      "datatype": "string",
       "replaces": "xx",
       "fileRename": "xx",
-      "datatype": "string"
+      "isRequired": true
     },
-    "ResultType" : {
-      "type": "parameter", 
+    "Year": {
+      "type": "parameter",
+      "description": "The year of the puzzle. If not specified, the year 2023 will be used.",
+      "datatype": "string",
+      "replaces": "CurrYear",
+      "fileRename": "CurrYear",
+      "defaultValue": "2023"
+    },
+      
+    "ResultType": {
+      "type": "parameter",
       "description": "The type of the expected result.",
       "defaultValue": "int",
       "replaces": "/*resultType*/int",
@@ -33,7 +58,7 @@
     },
     "InputReadMethod": {
       "type": "parameter",
-      "description": "How the input should be read. (not currently used)",
+      "description": "How the input should be read.",
       "datatype": "choice",
       "choices": [
         {
@@ -45,8 +70,8 @@
           "description": "Reads the input line by line and stores it in a string list."
         }
       ],
-      "defaultValue": "LineByLine",
-      "replaces":"InputReadMethod"
+      "defaultValue": "LineByLineArray",
+      "replaces": "InputReadMethod"
     },
     "LineByLineArray": {
       "type": "computed",
@@ -55,10 +80,6 @@
     "LineByLineList": {
       "type": "computed",
       "value": "(InputReadMethod == \"LineByLineList\")"
-    },
-    "FileName": {
-      "type": "computed",
-      "value": "Day(Day).cs"
     }
   }
 }

@@ -3,17 +3,16 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <TargetFramework>net7.0</TargetFramework>
+        <RootNamespace>dxxyCurrYear</RootNamespace>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>Templates</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <None Include=".template.config\template.json" />
       <None Update="inputDayxx.txt">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="testInput.txt">
+      <None Update="testInputDayxx.txt">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>

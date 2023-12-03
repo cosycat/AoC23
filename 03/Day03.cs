@@ -27,6 +27,8 @@ public class Day03 {
             }
         }
 
+        var solution2 = 0;
+
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 if (allLines[y][x] == '.' || (allLines[y][x] >= '0' && allLines[y][x] <= '9')) {
@@ -34,6 +36,8 @@ public class Day03 {
                 }
 
                 // Console.WriteLine($"Found symbol {allLines[y][x]} at {x},{y}");
+                var isGearSymbol = allLines[y][x] == '*';
+                var gearNumbers = new HashSet<Number>();
                 
                 // Is Symbol
                 for (int y1 = Math.Max(0, y-1); y1 < Math.Min(y+2, height); y1++) {
@@ -41,8 +45,13 @@ public class Day03 {
                         if (numbersField[y1, x1] != null) {
                             // Console.WriteLine($"Found number {numbersField[y1, x1]!.Value} at {x1},{y1}, for symbol {allLines[y][x]} at {x},{y}");
                             numbersField[y1, x1]!.SetValid();
+                            gearNumbers.Add(numbersField[y1, x1]!);
                         }
                     }
+                }
+
+                if (isGearSymbol && gearNumbers.Count == 2) {
+                    solution2 += gearNumbers.Aggregate(1, (acc, n) => acc * n.Value);
                 }
             }
         }
@@ -53,6 +62,7 @@ public class Day03 {
         
         var solution1 = allNumbers.Where(n => n.Valid).Sum(n => n.Value);
         Console.WriteLine($"Solution 1: {solution1}");
+        Console.WriteLine($"Solution 2: {solution2}");
 
 
     }

@@ -81,11 +81,13 @@ public static class Day04 {
 
         List<int> cardInstancesProcessed = new();
         Stack<int> cardInstancesToProcess = new();
-        cardInstancesToProcess.Push(0);
+        for (int i = 0; i < allCards.Count; i++) {
+            cardInstancesToProcess.Push(i);
+        }
 
         while (cardInstancesToProcess.Count > 0) {
             var cardIndex = cardInstancesToProcess.Pop();
-            Console.WriteLine($"Processing card {cardIndex}");
+            // Console.WriteLine($"Processing card {cardIndex}");
             cardInstancesProcessed.Add(cardIndex);
             var card = allCards[cardIndex];
             result2++;
@@ -93,11 +95,11 @@ public static class Day04 {
                 var nextCardIndex = cardIndex + i + 1;
                 Debug.Assert(allCards.Count > nextCardIndex, $"Card {nextCardIndex} does not exist");
                 cardInstancesToProcess.Push(nextCardIndex);
-                Console.WriteLine($"  Adding card {nextCardIndex}");
+                // Console.WriteLine($"  Adding card {nextCardIndex}");
             }
         }
 
-        Console.WriteLine($"Cards {allCards.Count}: {string.Join(", ", allCards.Select(c => $"{c.matchCount}/{c.cardValue}"))}");
+        // Console.WriteLine($"Cards {allCards.Count} (matches/value): {string.Join(", ", allCards.Select(c => $"{c.matchCount}/{c.cardValue}"))}");
         
         Debug.Assert(cardInstancesProcessed.Count == result2);
 

@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-#
+# 
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "01", "01\01.csproj", "{2D458D37-88EA-4DB3-9F38-86894698CF1F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "02", "02\02.csproj", "{836FA049-F82F-417F-BD3C-1569BB44AED9}"
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "03", "03\03.csproj", "{3181F0E2-E880-45EA-8AB1-2F372236D21E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AoCTemplate", "AoCTemplate\AoCTemplate.csproj", "{764AC558-5E4C-40D5-87E6-C1336F7EED52}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "04", "04\04.csproj", "{79906C5D-A9D9-4F17-B6F8-9119A21320AF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{764AC558-5E4C-40D5-87E6-C1336F7EED52}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{764AC558-5E4C-40D5-87E6-C1336F7EED52}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{764AC558-5E4C-40D5-87E6-C1336F7EED52}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79906C5D-A9D9-4F17-B6F8-9119A21320AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79906C5D-A9D9-4F17-B6F8-9119A21320AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79906C5D-A9D9-4F17-B6F8-9119A21320AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79906C5D-A9D9-4F17-B6F8-9119A21320AF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection

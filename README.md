@@ -22,3 +22,5 @@ day=01 && dotnet new AoC -o $day -D $day -R int && dotnet sln add $day
 For a different year than 2023, use the `-Y` option, or edit the default value for the Year parameter in the template.json file.
 
 Use `dotnet new AoC --help` for more information.
+
+see https://github.com/dotnet/templating/wiki/Reference-for-template.json

@@ -12,10 +12,14 @@ public static class Day04 {
 
     public static void Main(string[] args) {
         TestRun();
-
+        
+        Stopwatch sw = new();
+        sw.Start();
         Solve(InputFileName, out var result1, out var result2);
+        sw.Stop();
         Console.WriteLine($"Result 1: {result1}");
         Console.WriteLine($"Result 2: {result2}");
+        Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
     }
     
     [Conditional("DEBUG")]

@@ -9,6 +9,12 @@ public static class Dayxx {
     private const string InputFileName = "inputDayxx.txt";
     private const string TestFileName = "testInputDayxx.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
+    
+    private const /*resultType*/int ActualResult1 = 0; // For ensuring it stays correct, once the actual result is known
+    private const /*resultType*/int ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
+    
+    private const string Success = "✅";
+    private const string Fail = "❌";
 
     public static void Main(string[] args) {
         TestRun();
@@ -17,19 +23,21 @@ public static class Dayxx {
         sw.Start();
         Solve(InputFileName, out var result1, out var result2);
         sw.Stop();
-        Console.WriteLine($"Result 1: {result1}");
-        Console.WriteLine($"Result 2: {result2}");
+        PrintResult(result1, ActualResult1, 1);
+        PrintResult(result2, ActualResult2, 2);
         Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
+    }
+    
+    private static void PrintResult(/*resultType*/int result, /*resultType*/int expected, int index, bool isTest = false) {
+        Console.WriteLine($"{(isTest ? "Test " : "")}Result {index}: {result} {(expected == 0 ? "" : expected == result ? Success : Fail + $"(expected: {expected})")} ");
     }
     
     [Conditional("DEBUG")]
     private static void TestRun() {
         Solve(TestFileName, out var resultTest1, out var resultTest2);
-        const string success = "✅";
-        const string fail = "❌";
-        Console.WriteLine($"Test result 1: {(resultTest1 == ExpectedResultTest1 ? success : fail)} (result: {resultTest1}, expected: {ExpectedResultTest1})");
+        PrintResult(resultTest1, ExpectedResultTest1, 1, true);
         if (Test2Started)
-            Console.WriteLine($"Test result 2: {(resultTest2 == ExpectedResultTest2 ? success : fail)} (result: {resultTest2}, expected: {ExpectedResultTest2})");
+            PrintResult(resultTest2, ExpectedResultTest2, 2, true);
         Console.WriteLine();
 
         Debug.Assert(ExpectedResultTest1 != 0, "No expected result for test 1 set!");
@@ -65,7 +73,7 @@ public static class Dayxx {
             var line = allLines[i];
             var mainMatch = Regex.Match(line, mainPattern);
             Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(), $"Line {i} does not match {mainMatch.Value}");
-            var inputs = mainMatch.Groups[singleInputName].Captures.Select(c => int.Parse(c.Value)).ToList();
+            var inputs = mainMatch.Groups[singleInputName].Captures.Select(c => /*resultType*/int.Parse(c.Value)).ToList();
             
             // TODO your code here..
         }

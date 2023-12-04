@@ -9,6 +9,11 @@ public static class Day04 {
     private const string InputFileName = "inputDay04.txt";
     private const string TestFileName = "testInputDay04.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
+    
+    private const int ActualResult1 = 21485;
+    private const int ActualResult2 = 11024379;
+    private const string Success = "✅";
+    private const string Fail = "❌";
 
     public static void Main(string[] args) {
         TestRun();
@@ -17,21 +22,23 @@ public static class Day04 {
         sw.Start();
         Solve(InputFileName, out var result1, out var result2);
         sw.Stop();
-        Console.WriteLine($"Result 1: {result1}");
-        Console.WriteLine($"Result 2: {result2}");
+        PrintResult(result1, ActualResult1, 1);
+        PrintResult(result2, ActualResult2, 2);
         Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
+    }
+    
+    private static void PrintResult(int result, int expected, int index) {
+        Console.WriteLine($"Result {index}: {result} {(expected == 0 ? "" : expected == result ? Success : Fail + $"(expected: {expected})")} ");
     }
     
     [Conditional("DEBUG")]
     private static void TestRun() {
         Solve(TestFileName, out var resultTest1, out var resultTest2);
-        const string success = "✅";
-        const string fail = "❌";
         Console.WriteLine(
-            $"Test result 1: {(resultTest1 == ExpectedResultTest1 ? success : fail)} (result: {resultTest1}, expected: {ExpectedResultTest1})");
+            $"Test result 1: {(resultTest1 == ExpectedResultTest1 ? Success : Fail)} (result: {resultTest1}, expected: {ExpectedResultTest1})");
         if (Test2Started)
             Console.WriteLine(
-                $"Test result 2: {(resultTest2 == ExpectedResultTest2 ? success : fail)} (result: {resultTest2}, expected: {ExpectedResultTest2})");
+                $"Test result 2: {(resultTest2 == ExpectedResultTest2 ? Success : Fail)} (result: {resultTest2}, expected: {ExpectedResultTest2})");
         Console.WriteLine();
 
         Debug.Assert(ExpectedResultTest1 != 0, "No expected result for test 1 set!");

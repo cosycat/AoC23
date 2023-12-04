@@ -1,13 +1,13 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
-namespace dxxyCurrYear; 
+namespace d05y2023; 
 
-public static class Dayxx {
-    private const /*resultType*/int ExpectedResultTest1 = 0; // TODO replace
-    private const /*resultType*/int ExpectedResultTest2 = 0; // TODO replace
-    private const string InputFileName = "inputDayxx.txt";
-    private const string TestFileName = "testInputDayxx.txt";
+public static class Day05 {
+    private const int ExpectedResultTest1 = 0; // TODO replace
+    private const int ExpectedResultTest2 = 0; // TODO replace
+    private const string InputFileName = "inputDay05.txt";
+    private const string TestFileName = "testInputDay05.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
 
     public static void Main(string[] args) {
@@ -37,7 +37,7 @@ public static class Dayxx {
         Debug.Assert(!Test2Started || ExpectedResultTest2 == resultTest2, "Test 2 failed!");
     }
 
-    private static void Solve(string inputFileName, out /*resultType*/int result1, out /*resultType*/int result2) {
+    private static void Solve(string inputFileName, out int result1, out int result2) {
         result1 = 0; 
         result2 = 0;
         

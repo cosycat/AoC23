@@ -83,29 +83,40 @@ public static class Day04 {
             allCards.Add((matchesCount, cardValue));
         }
 
-        List<int> cardInstancesProcessed = new();
-        Stack<int> cardInstancesToProcess = new();
-        for (int i = 0; i < allCards.Count; i++) {
-            cardInstancesToProcess.Push(i);
-        }
-
-        while (cardInstancesToProcess.Count > 0) {
-            var cardIndex = cardInstancesToProcess.Pop();
-            // Console.WriteLine($"Processing card {cardIndex}");
-            cardInstancesProcessed.Add(cardIndex);
-            var card = allCards[cardIndex];
-            result2++;
-            for (int i = 0; i < card.matchCount; i++) {
-                var nextCardIndex = cardIndex + i + 1;
-                Debug.Assert(allCards.Count > nextCardIndex, $"Card {nextCardIndex} does not exist");
-                cardInstancesToProcess.Push(nextCardIndex);
-                // Console.WriteLine($"  Adding card {nextCardIndex}");
+        // faster (about 1ms)
+        var cardCopyCount = new int[allCards.Count];
+        for (int i = 0; i < cardCopyCount.Length; i++) {
+            var matches = allCards[i].matchCount;
+            result2 += cardCopyCount[i] + 1; // add one for the original card
+            for (int j = 0; j < matches; j++) {
+                cardCopyCount[i + j + 1] += cardCopyCount[i] + 1; // add one for the original card
             }
         }
 
-        // Console.WriteLine($"Cards {allCards.Count} (matches/value): {string.Join(", ", allCards.Select(c => $"{c.matchCount}/{c.cardValue}"))}");
-        
-        Debug.Assert(cardInstancesProcessed.Count == result2);
+        // slower (about 180ms)
+        // List<int> cardInstancesProcessed = new();
+        // Stack<int> cardInstancesToProcess = new();
+        // for (int i = 0; i < allCards.Count; i++) {
+        //     cardInstancesToProcess.Push(i);
+        // }
+        //
+        // while (cardInstancesToProcess.Count > 0) {
+        //     var cardIndex = cardInstancesToProcess.Pop();
+        //     // Console.WriteLine($"Processing card {cardIndex}");
+        //     cardInstancesProcessed.Add(cardIndex);
+        //     var card = allCards[cardIndex];
+        //     result2++;
+        //     for (int i = 0; i < card.matchCount; i++) {
+        //         var nextCardIndex = cardIndex + i + 1;
+        //         Debug.Assert(allCards.Count > nextCardIndex, $"Card {nextCardIndex} does not exist");
+        //         cardInstancesToProcess.Push(nextCardIndex);
+        //         // Console.WriteLine($"  Adding card {nextCardIndex}");
+        //     }
+        // }
+        //
+        // // Console.WriteLine($"Cards {allCards.Count} (matches/value): {string.Join(", ", allCards.Select(c => $"{c.matchCount}/{c.cardValue}"))}");
+        //
+        // Debug.Assert(cardInstancesProcessed.Count == result2);
 
     }
     

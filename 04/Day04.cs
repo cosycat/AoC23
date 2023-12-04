@@ -1,9 +1,10 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace d04y2023; 
 
 public static class Day04 {
-    private const int ExpectedResultTest1 = 0; // TODO replace
+    private const int ExpectedResultTest1 = 13; // TODO replace
     private const int ExpectedResultTest2 = 0; // TODO replace
     private const string InputFileName = "inputDay04.txt";
     private const string TestFileName = "testInputDay04.txt";
@@ -38,19 +39,39 @@ public static class Day04 {
         result1 = 0; 
         result2 = 0;
         
-        var allLines = File.ReadAllLines(inputFileName).ToArray(); // .ToList();
-        Debug.Assert(allLines.Length > 0, $"Input file {inputFileName} is empty!");
+        var allLines = File.ReadAllLines(inputFileName).ToList();
+        Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
         var width = allLines[0].Length;
-        var height = allLines.Length; // .Count;
-        
-        for (int y = 0; y < height; y++) {
-            var line = allLines[y];
-            for (int x = 0; x < width; x++) {
-                var c = line[x];
-                // TODO your code here..
+        var height = allLines.Count;
+
+        for (int i = 0; i < allLines.Count; i++) {
+            var line = allLines[i];
+
+            var bothNumbers = line.Split(":")[1].Split("|");
+            Debug.Assert(bothNumbers.Length == 2, $"Line {i} does not have 2 numbers");
+
+            const string numbersPattern = @"(?:\s*(?'Number'\d+))+";
+
+            var winningNumbers = Regex.Match(bothNumbers[0], numbersPattern).Groups["Number"].Captures.Select(c => int.Parse(c.Value)).ToList();
+            var ourNumbers = Regex.Match(bothNumbers[1], numbersPattern).Groups["Number"].Captures.Select(c => int.Parse(c.Value)).ToList();
+            
+            Debug.Assert(winningNumbers.Distinct().Count() == winningNumbers.Count, $"Line {i} has duplicate winning numbers");
+            Debug.Assert(ourNumbers.Distinct().Count() == ourNumbers.Count, $"Line {i} has duplicate our numbers");
+
+            Console.WriteLine($"Line {i}: {string.Join(", ", winningNumbers)} | {string.Join(", ", ourNumbers)}");
+            
+            var matches = ourNumbers.Intersect(winningNumbers).ToList();
+            var matchesCount = matches.Count;
+            Console.WriteLine($"Line {i}: {matchesCount} matches: {string.Join(", ", matches)}");
+            
+            if (matchesCount == 0) continue;
+            var cardValue = 1;
+            for (int j = 0; j < matchesCount - 1; j++) {
+                cardValue *= 2;
             }
+            result1 += cardValue;
+
         }
-        
         
     }
     

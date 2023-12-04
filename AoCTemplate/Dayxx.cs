@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace dxxyCurrYear; 
 
@@ -38,18 +39,12 @@ public static class Dayxx {
         result1 = 0; 
         result2 = 0;
         
-#if(LineByLineList)
         var allLines = File.ReadAllLines(inputFileName).ToList(); // .ToArray();
-        Debug.Assert(allLines.Length > 0, $"Input file {inputFileName} is empty!");
+        Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
         var width = allLines[0].Length;
         var height = allLines.Count; // .Length;
-#else // LineByLineArray (default)
-        var allLines = File.ReadAllLines(inputFileName).ToArray(); // .ToList();
-        Debug.Assert(allLines.Length > 0, $"Input file {inputFileName} is empty!");
-        var width = allLines[0].Length;
-        var height = allLines.Length; // .Count;
-#endif
         
+        // Process input char by char
         for (int y = 0; y < height; y++) {
             var line = allLines[y];
             for (int x = 0; x < width; x++) {
@@ -57,6 +52,24 @@ public static class Dayxx {
                 // TODO your code here..
             }
         }
+
+        // Process input line by line with regex
+        const string singleInputName = "SingleInput";
+        const string singleInputPattern = @"\d+";
+        const string mainPattern = $@"InputLine \d+:(?:\s*(?'{singleInputName}'{singleInputPattern}),?)+";
+        // Regex for strings like "InputLine 1: 10,  2, 33,  4, 56, 78,  9"
+        Console.WriteLine($"Regex: {mainPattern}");
+        for (int i = 0; i < allLines.Count; i++) {
+            var line = allLines[i];
+            var mainMatch = Regex.Match(line, mainPattern);
+            Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(), $"Line {i} does not match {mainMatch.Value}");
+            var inputs = mainMatch.Groups[singleInputName].Captures.Select(c => int.Parse(c.Value)).ToList();
+            
+            // TODO your code here..
+        }
+
+        
+        
         
         
     }

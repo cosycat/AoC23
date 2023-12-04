@@ -58,28 +58,36 @@
     },
     "InputReadMethod": {
       "type": "parameter",
-      "description": "How the input should be read.",
+      "description": "How the input should be read. (currently unused, all input methods are added for convenience)",
       "datatype": "choice",
       "choices": [
         {
-          "choice": "LineByLineArray",
+          "choice": "Array",
           "description": "Reads the input line by line and stores it in a string array."
         },
         {
-          "choice": "LineByLineList",
+          "choice": "List",
           "description": "Reads the input line by line and stores it in a string list."
+        },
+        {
+            "choice": "Regex",
+            "description": "Reads the input line by line in a list and prepares it for parsing it with a regex."
         }
       ],
-      "defaultValue": "LineByLineArray",
+      "defaultValue": "Regex",
       "replaces": "InputReadMethod"
     },
-    "LineByLineArray": {
+    "Array": {
       "type": "computed",
-      "value": "(InputReadMethod == \"LineByLineArray\")"
+      "value": "(InputReadMethod == \"Array\")"
     },
-    "LineByLineList": {
+    "List": {
       "type": "computed",
-      "value": "(InputReadMethod == \"LineByLineList\")"
+      "value": "(InputReadMethod == \"List\")"
+    },
+    "Regex": {
+      "type": "computed",
+      "value": "(InputReadMethod == \"Regex\")"
     }
   }
 }

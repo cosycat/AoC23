@@ -54,13 +54,6 @@ public static class Day05 {
         var wholeInput = string.Join("\n", allLines);
         Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
 
-        // Process input line by line with regex
-        // const string singleInputName = "SingleInput";
-        // const string singleInputPattern = @"\d+";
-        // const string mainPattern = $@"InputLine \d+:(?:\s*(?'{singleInputName}'{singleInputPattern}),?)+";
-        // // Regex for strings like "InputLine 1: 10,  2, 33,  4, 56, 78,  9"
-        // Console.WriteLine($"Regex: {mainPattern}");
-
         var seeds1 = Regex.Match(allLines[0], @"seeds: (?'Seed'\d+\s?)+").Groups["Seed"].Captures.Select(c => long.Parse(c.Value)).ToList();
         var destinations1 = new long[seeds1.Count];
         for (var i = 0; i < seeds1.Count; i++) {

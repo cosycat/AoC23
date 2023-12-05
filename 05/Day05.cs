@@ -5,13 +5,13 @@ namespace d05y2023;
 
 public static class Day05 {
     private const long ExpectedResultTest1 = 35;
-    private const long ExpectedResultTest2 = 0; // TODO replace
+    private const long ExpectedResultTest2 = 46;
     private const string InputFileName = "inputDay05.txt";
     private const string TestFileName = "testInputDay05.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
     private const int ActualResult1 = 309796150;
-    private const int ActualResult2 = 0;
+    private const int ActualResult2 = 50716416;
     private const string Success = "✅";
     private const string Fail = "❌";
 
@@ -20,11 +20,11 @@ public static class Day05 {
 
         Stopwatch sw = new();
         sw.Start();
-        Solve(InputFileName, out var result1, out var result2);
+        Solve(InputFileName, out var result1, out var result2, printTimeRes1: () => Console.WriteLine($"Result 1 found in: {sw.ElapsedMilliseconds}ms"));
         sw.Stop();
         PrintResult(result1, ActualResult1, 1);
         PrintResult(result2, ActualResult2, 2);
-        Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
+        Console.WriteLine($"Total Time: {sw.ElapsedMilliseconds}ms");
     }
     
     private static void PrintResult(long result, long expected, int index, bool isTest = false) {
@@ -33,7 +33,7 @@ public static class Day05 {
     
     [Conditional("DEBUG")]
     private static void TestRun() {
-        Solve(TestFileName, out var resultTest1, out var resultTest2);
+        Solve(TestFileName, out var resultTest1, out var resultTest2, null);
         const string success = "✅";
         const string fail = "❌";
         Console.WriteLine($"Test result 1: {(resultTest1 == ExpectedResultTest1 ? success : fail)} (result: {resultTest1}, expected: {ExpectedResultTest1})");
@@ -46,7 +46,7 @@ public static class Day05 {
         Debug.Assert(!Test2Started || ExpectedResultTest2 == resultTest2, "Test 2 failed!");
     }
 
-    private static void Solve(string inputFileName, out long result1, out long result2) {
+    private static void Solve(string inputFileName, out long result1, out long result2, Action? printTimeRes1) {
         result1 = 0; 
         result2 = 0;
         
@@ -73,16 +73,7 @@ public static class Day05 {
         var lengthsSeeds2 = match.Groups["Length"].Captures.Select(c => long.Parse(c.Value)).ToList();
         var seedAndLengths2 = seeds2.Zip(lengthsSeeds2, (seed, length) => (seed, length)).ToList();
         Debug.Assert(seeds2.Count == lengthsSeeds2.Count, "Seeds and lengths count mismatch");
-        var destinations2List = new List<long>();
         Console.WriteLine($"counting seeds {seeds2.Count} -> {seedAndLengths2.Aggregate(0L, (a, s) => a + s.length)}");
-        for (var i = 0; i < seeds2.Count; i++) {
-            for (var j = 0; j < lengthsSeeds2[i]; j++) {
-                destinations2List.Add(seeds2[i] + j);
-            }
-        }
-        var destinations2 = destinations2List.ToArray();
-        Console.WriteLine($"Seed count 2: {destinations2.Length}");
-        Console.WriteLine($"Destinations 2: {string.Join(", ", destinations2)}");
         
         var aToBs = new List<AtoB>();
 
@@ -103,19 +94,34 @@ public static class Day05 {
             for (int i = 0; i < destinations1.Length; i++) {
                 destinations1[i] = aToB.GetB(destinations1[i]);
             }
-            for (int i = 0; i < destinations2.Length; i++) {
-                destinations2[i] = aToB.GetB(destinations2[i]);
+        }
+
+        result1 = destinations1.Min();
+        printTimeRes1?.Invoke();
+
+        foreach (var atoB in aToBs) {
+            var seedsToProcess = new Stack<(long seed, long length)>();
+            foreach (var s in seedAndLengths2) {
+                seedsToProcess.Push(s);
+            }
+            seedAndLengths2.Clear();
+            while (seedsToProcess.Count > 0) {
+                var (a, length) = seedsToProcess.Pop();
+                var b = atoB.GetB(a);
+                var nextJump = atoB.GetNextJump(a, length);
+                if (nextJump.HasValue) {
+                    var (nextA, nextB) = nextJump.Value;
+                    var prevLength = nextA - a;
+                    var nextLength = length - prevLength;
+                    seedAndLengths2.Add((b, prevLength));
+                    seedsToProcess.Push((nextA, nextLength));
+                } else {
+                    seedAndLengths2.Add((b, length));
+                }
             }
         }
 
-        Console.Write("Destinations: ");
-        foreach (var destination in destinations1) {
-            Console.Write($"{destination} ");
-        }
-        Console.WriteLine();
-
-        result1 = destinations1.Min();
-        result2 = destinations2.Min();
+        result2 = seedAndLengths2.Select(s => s.seed).Min();
 
     }
     
@@ -139,6 +145,17 @@ public class AtoB {
         var range = Ranges[nextLower];
         if (range.startA + range.length <= a) return a;
         return range.startB + (a - range.startA);
+    }
+
+    public (long a, long b)? GetNextJump(long a, long length) {
+        var nextLower = Ranges.FindLastIndex(r => r.startA <= a);
+        var nextHigher = Ranges.FindIndex(r => r.startA > a);
+        if (nextHigher == -1) return null;
+        var nextHigherRange = Ranges[nextHigher];
+        (long startA, long startB, long length) nextLowerRange = nextLower == -1 ? (0L, 0L, nextHigherRange.startA) : Ranges[nextLower];
+        if (a + length <= nextLowerRange.startA + nextLowerRange.length) return null;
+        if (a + length <= nextHigherRange.startA) return null;
+        return (nextHigherRange.startA, nextHigherRange.startB);
     }
     
 }

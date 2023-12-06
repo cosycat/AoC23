@@ -4,14 +4,14 @@ using System.Text.RegularExpressions;
 namespace d06y2023; 
 
 public static class Day06 {
-    private const int ExpectedResultTest1 = 0; // TODO replace
-    private const int ExpectedResultTest2 = 0; // TODO replace
+    private const long ExpectedResultTest1 = 288;
+    private const long ExpectedResultTest2 = 71503;
     private const string InputFileName = "inputDay06.txt";
     private const string TestFileName = "testInputDay06.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
-    private const int ActualResult1 = 0; // For ensuring it stays correct, once the actual result is known
-    private const int ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult1 = 345015; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
     
     private const string Success = "✅";
     private const string Fail = "❌";
@@ -28,7 +28,7 @@ public static class Day06 {
         Console.WriteLine($"Time: {sw.ElapsedMilliseconds}ms");
     }
     
-    private static void PrintResult(int result, int expected, int index, bool isTest = false) {
+    private static void PrintResult(long result, long expected, int index, bool isTest = false) {
         Console.WriteLine($"{(isTest ? "Test " : "")}Result {index}: {result} {(expected == 0 ? "" : expected == result ? Success : Fail + $"(expected: {expected})")} ");
     }
     
@@ -45,43 +45,43 @@ public static class Day06 {
         Debug.Assert(!Test2Started || ExpectedResultTest2 == resultTest2, "Test 2 failed!");
     }
 
-    private static void Solve(string inputFileName, out int result1, out int result2) {
-        result1 = 0; 
+    private static void Solve(string inputFileName, out long result1, out long result2) {
+        result1 = 1;
         result2 = 0;
         
         var allLines = File.ReadAllLines(inputFileName).ToList(); // .ToArray();
         Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
-        var width = allLines[0].Length;
-        var height = allLines.Count; // .Length;
-        
-        // Process input char by char
-        for (int y = 0; y < height; y++) {
-            var line = allLines[y];
-            for (int x = 0; x < width; x++) {
-                var c = line[x];
-                // TODO your code here..
-            }
-        }
 
         // Process input line by line with regex
         const string singleInputName = "SingleInput";
         const string singleInputPattern = @"\d+";
-        const string mainPattern = $@"InputLine \d+:(?:\s*(?'{singleInputName}'{singleInputPattern}),?)+";
+        const string mainPattern = $@"\w+:(?:\s*(?'{singleInputName}'{singleInputPattern}),?)+";
         // Regex for strings like "InputLine 1: 10,  2, 33,  4, 56, 78,  9"
-        Console.WriteLine($"Regex: {mainPattern}");
-        for (int i = 0; i < allLines.Count; i++) {
-            var line = allLines[i];
-            var mainMatch = Regex.Match(line, mainPattern);
-            Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(), $"Line {i} does not match {mainMatch.Value}");
-            var inputs = mainMatch.Groups[singleInputName].Captures.Select(c => int.Parse(c.Value)).ToList();
-            
-            // TODO your code here..
+        var times = Regex.Match(allLines[0], mainPattern).Groups[singleInputName].Captures.Select(c => int.Parse(c.Value)).ToList();
+        var distances = Regex.Match(allLines[1], mainPattern).Groups[singleInputName].Captures.Select(c => int.Parse(c.Value)).ToList();
+        Debug.Assert(times.Count == distances.Count, "Number of times and distances does not match!");
+        var races = times.Zip(distances, (time, distance) => (time, distance)).ToList();
+
+        foreach (var (time, distance) in races) {
+            var waysToBeatRecord = WaysToBeatRecord(time, distance);
+            result1 *= waysToBeatRecord;
         }
 
+        var time2 = long.Parse(allLines[0].Split(":")[1].Replace(" ", ""));
+        var distance2 = long.Parse(allLines[1].Split(":")[1].Replace(" ", ""));
         
-        
-        
-        
+        result2 = WaysToBeatRecord(time2, distance2);
     }
-    
+
+    private static long WaysToBeatRecord(long time, long distance) {
+        var waysToBeatRecord = 0L;
+        for (int i = 0; i < time; i++) {
+            // hold the button for i milliseconds
+            var distanceTraveled = (time - i) * i;
+            if (distanceTraveled > distance)
+                waysToBeatRecord++;
+        }
+
+        return waysToBeatRecord;
+    }
 }

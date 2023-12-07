@@ -129,7 +129,7 @@ class Hand : IComparable<Hand> {
         }
 
         if (groups2.Count == 3) {
-            if (groups2[1].Count() == 1) {
+            if (groups2.First(g => g.Key == 1).Count() == 1) {
                 if (groups2.Any(g => g.Count() == 2)) {
                     return HandRating.FullHouse;
                 }

@@ -4,13 +4,13 @@ using System.Text.RegularExpressions;
 namespace d07y2023; 
 
 public static class Day07 {
-    private const long ExpectedResultTest1 = 6440; // TODO replace
-    private const long ExpectedResultTest2 = 0; // TODO replace
+    private const long ExpectedResultTest1 = 6440;
+    private const long ExpectedResultTest2 = 5905;
     private const string InputFileName = "inputDay07.txt";
     private const string TestFileName = "testInputDay07.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
-    private const long ActualResult1 = 0; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult1 = 251029473; // For ensuring it stays correct, once the actual result is known
     private const long ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
     
     private const string Success = "✅";
@@ -61,6 +61,11 @@ public static class Day07 {
         hands.Sort();
         for (int i = 0; i < hands.Count; i++) {
             result1 += (i + 1) * hands[i].Value;
+            hands[i].UpdateRating(jokerVersion: true); // for part 2
+        }
+        hands.Sort();
+        for (int i = 0; i < hands.Count; i++) {
+            result2 += (i + 1) * hands[i].Value;
         }
         
     }
@@ -79,24 +84,70 @@ class Hand : IComparable<Hand> {
         for (int i = 0; i < 5; i++) {
             _cards[i] = ParseCard(cardInput[i]);
         }
-        _rating = GetRating();
+        UpdateRating(false);
     }
 
-    private HandRating GetRating() {
-        if (_cards.Distinct().Count() == 1) {
-            return HandRating.FiveOfAKind;
+    public void UpdateRating(bool jokerVersion = false) {
+        _rating = GetRating(jokerVersion);
+    }
+
+    private HandRating GetRating(bool jokerVersion = false) {
+        if (jokerVersion) {
+            for (int i = 0; i < 5; i++) {
+                if (_cards[i] == 11) _cards[i] = 1;
+            }
         }
-        var groups = _cards.GroupBy(c => c).ToList();
-        if (groups.Count == 2) {
-            return groups.Any(g => g.Count() == 4) ? HandRating.FourOfAKind : HandRating.FullHouse;
+        
+        // Regular rules
+        if (!jokerVersion || _cards.All(c => c != 1)) {
+            if (_cards.Distinct().Count() == 1) {
+                return HandRating.FiveOfAKind;
+            }
+
+            var groups = _cards.GroupBy(c => c).ToList();
+            if (groups.Count == 2) {
+                return groups.Any(g => g.Count() == 4) ? HandRating.FourOfAKind : HandRating.FullHouse;
+            }
+
+            if (groups.Count == 3) {
+                return groups.Any(g => g.Count() == 3) ? HandRating.ThreeOfAKind : HandRating.TwoPairs;
+            }
+
+            if (groups.Count == 4) {
+                return HandRating.Pair;
+            }
+
+            return HandRating.HighCard;
         }
-        if (groups.Count == 3) {
-            return groups.Any(g => g.Count() == 3) ? HandRating.ThreeOfAKind : HandRating.TwoPairs;
+        
+        Debug.Assert(_cards.Any(c => c == 1), "No joker found!");
+        // Joker rules And at least one joker
+        var groups2 = _cards.GroupBy(c => c).ToList();
+
+        if (groups2.Count is 1 or 2) {
+            return HandRating.FiveOfAKind; // All Jokers or jokers and one other type
         }
-        if (groups.Count == 4) {
-            return HandRating.Pair;
+
+        if (groups2.Count == 3) {
+            if (groups2[1].Count() == 1) {
+                if (groups2.Any(g => g.Count() == 2)) {
+                    return HandRating.FullHouse;
+                }
+                else {
+                    return HandRating.FourOfAKind;
+                }
+            }
+            else {
+                return HandRating.FourOfAKind;
+            }
         }
-        return HandRating.HighCard;
+        
+        if (groups2.Count == 4) {
+            return HandRating.ThreeOfAKind;
+        }
+        
+        return HandRating.Pair;
+
     }
 
 

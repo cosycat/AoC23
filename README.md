@@ -16,7 +16,7 @@ dotnet new install AoCTemplate --force
 Example to create a new project for day 1:
 
 ```
-day=01 && dotnet new AoC -o $day -D $day -R int && dotnet sln add $day
+day=01 && dotnet new AoC -o $day -D $day -R long && dotnet sln add $day
 ```
 
 For a different year than 2023, use the `-Y` option, or edit the default value for the Year parameter in the template.json file.

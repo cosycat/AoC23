@@ -5,7 +5,7 @@ namespace d08y2023;
 
 public static class Day08 {
     private const long ExpectedResultTest1 = 2;
-    private const long ExpectedResultTest2 = 6;
+    private const long ExpectedResultTest2 = 0;
     private const string InputFileName = "inputDay08.txt";
     private const string TestFileName = "testInputDay08.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
@@ -17,7 +17,7 @@ public static class Day08 {
     private const string Fail = "❌";
 
     public static void Main(string[] args) {
-        TestRun();
+        // TestRun();
 
         Stopwatch sw = new();
         sw.Start();
@@ -79,7 +79,7 @@ public static class Day08 {
         
         // PART 1
         if (nodes.ContainsKey("AAA") && nodes.ContainsKey("ZZZ")) {
-            var (stepCount, endNode) = CountSteps(new List<Node> {nodes["AAA"]}, instructions, (node, _) => node.Name == "ZZZ");
+            var (stepCount, endNode, _) = CountSteps(new List<Node> {nodes["AAA"]}, instructions, (node, _) => node.Name == "ZZZ");
             result1 = stepCount;
             Console.WriteLine($"Steps: {stepCount}, end node: {endNode.Name}");
         }
@@ -96,12 +96,23 @@ public static class Day08 {
         Console.WriteLine($"End nodes: {string.Join(", ", nodes.Values.Where(node => node.Name.EndsWith("Z")).Select(node => node.Name))}");
         
         const bool useBruteForce = true;
-        if (useBruteForce) {
-            var (stepCount, _) = CountSteps(startNodes, instructions, (node, _) => node.Name.EndsWith("Z"));
-            result2 = stepCount;
-            return;
+        var (sC, _, foundEndNodes) = CountSteps(startNodes, instructions, (node, _) => node.Name.EndsWith("Z"));
+
+        Console.WriteLine(foundEndNodes);
+
+        var foundEndNodesFlat = foundEndNodes.SelectMany(l => l).ToList();
+        foundEndNodesFlat.ForEach(t => Console.WriteLine($"{t.node.Name}: {t.steps}"));
+
+        var loops = new List<(Node endNode, long first, long loop)>();
+        for (int i = 0; i < 12; i += 2) {
+            loops.Add((foundEndNodesFlat[i].node, foundEndNodesFlat[i].steps, foundEndNodesFlat[i + 1].steps - foundEndNodesFlat[i].steps));
         }
+        Debug.Assert(loops.Count is 2 or 6);
+        var loopDists = loops.Select(l => l.first);
+        Console.WriteLine($"Loops: {string.Join(", ",  loopDists)}");
+        // => kgv of loopDists
         
+
         // var endNodes = nodes.Values.Where(node => node.Name.EndsWith("Z")).ToList();
         // var steps = startNodes.Select(startNode => { // Add all steps to all nodes before we loop back to the start node again
         //     var steps = new List<long>();
@@ -120,10 +131,10 @@ public static class Day08 {
         // for (var i = 0; i < startNodes.Count; i++) {
         //     currStepsCountPerStartNode.Add(steps[i].steps.Min());
         // }
-        
+
     }
 
-    private static (long stepCount, Node endNode) CountSteps(List<Node> startNodes, char[] instructions, Func<Node, long, bool> endChecker) {
+    private static (long stepCount, Node endNode, List<List<(Node node, long steps)>> endNodes) CountSteps(List<Node> startNodes, char[] instructions, Func<Node, long, bool> endChecker) {
         long steps = 0;
         var instructionIndex = 0;
         var currentNodes = new List<Node>();
@@ -131,32 +142,49 @@ public static class Day08 {
             currentNodes.Add(startNodes[i]);
         }
         var loops = 0;
+        var foundEndNodes = new List<List<(Node node, long steps)>>();
+        for (int i = 0; i < currentNodes.Count; i++) {
+            foundEndNodes.Add(new List<(Node node, long steps)>());
+        }
         while (currentNodes.Any(node => !endChecker(node, steps))) {
+            if (currentNodes.Any(node => node.Name.EndsWith("Z"))) {
+                for (int i = 0; i < currentNodes.Count; i++) {
+                    if (currentNodes[i].Name.EndsWith("Z") && foundEndNodes[i].Count(endNode => endNode.node == currentNodes[i]) < 2) {
+                        foundEndNodes[i].Add((currentNodes[i], steps));
+                        Console.WriteLine($"Found end node {currentNodes[i].Name} at step {steps} for start node {startNodes[i].Name}");
+                    }
+                }
+            }
+            if (foundEndNodes.All(l => l.Count >= 2)) {
+                Console.WriteLine($"Found all end nodes at step {steps}");
+                break;
+            }
+
             var instruction = instructions[instructionIndex];
-            currentNodes = instruction switch {
-                'L' => currentNodes.Select(node => node.Left).ToList(),
-                'R' => currentNodes.Select(node => node.Right).ToList(),
-                _ => throw new Exception($"Unknown instruction {instruction}")
-            };
+            for (int i = 0; i < currentNodes.Count; i++) {
+                currentNodes[i] = instruction switch {
+                    'L' => currentNodes[i].Left,
+                    'R' => currentNodes[i].Right,
+                    _ => throw new Exception($"Unknown instruction {instruction}")
+                };
+            }
 
             instructionIndex++;
-            if (instructionIndex >= instructions.Length) {
-                loops++;
-                instructionIndex = 0;
-            }
+            loops += instructionIndex / instructions.Length;
+            instructionIndex %= instructions.Length;
             steps++; // Count steps
-            for (var i = 0; i < currentNodes.Count; i++) {
-                var currentNode = currentNodes[i];
-                if (currentNode.Name.EndsWith("A")) {
-                    Console.WriteLine($"Looped for node {i}: {loops} times, steps: {steps}");
-                }
+
+            if (instructionIndex == 0 && loops % 100000 == 0) {
+                // Console.WriteLine($"Looped {loops} times, steps: {steps} - current nodes: {string.Join(", ", currentNodes.Select(node => node.Name))}");
             }
 
             // if (instructionIndex == 0) 
             //     Console.WriteLine($"Steps: {steps}, current nodes: {string.Join(", ", currentNodes.Select(node => node.Name))}");
         }
 
-        return (steps, startNodes.First());
+        Console.WriteLine($"Looped {loops} times, steps: {steps} - end node: {currentNodes.First().Name}");
+
+        return (steps, startNodes.First(), foundEndNodes);
     }
 }
 

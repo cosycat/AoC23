@@ -10,7 +10,7 @@ public static class Day09 {
     private const string TestFileName = "testInputDay09.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
-    private const long ActualResult1 = 0; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult1 = 1772145754; // For ensuring it stays correct, once the actual result is known
     private const long ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
     
     private const string Success = "✅";
@@ -54,34 +54,32 @@ public static class Day09 {
         var width = allLines[0].Length;
         var height = allLines.Count; // .Length;
         
-        // Process input char by char
-        for (int y = 0; y < height; y++) {
-            var line = allLines[y];
-            for (int x = 0; x < line.Length; x++) {
-                var c = line[x];
-                // TODO your code here..
-            }
-        }
-
-        // Process input line by line with regex
-        const string singleInputName = "SingleInput";
-        const string singleInputPattern = @"\d+";
-        const string mainPattern = $@"InputLine \d+:(?:\s*(?'{singleInputName}'{singleInputPattern}),?)+";
-        // Regex for strings like "InputLine 1: 10,  2, 33,  4, 56, 78,  9"
-        Console.WriteLine($"Regex: {mainPattern}");
         for (int i = 0; i < allLines.Count; i++) {
-            var line = allLines[i];
-            var mainMatch = Regex.Match(line, mainPattern);
-            Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(), $"Line {i} does not match {mainMatch.Value}");
-            var inputs = mainMatch.Groups[singleInputName].Captures.Select(c => long.Parse(c.Value)).ToList();
-            
-            // TODO your code here..
-        }
+            var inputLine = allLines[i].Split(" ").Select(int.Parse);
+            var lines = new List<List<int>> { inputLine.ToList() };
+            while (!LastLineIsZeroes(lines)) {
+                var newLine = new List<int>();
+                var lastLine = lines[^1];
+                for (int j = 0; j < lastLine.Count - 1; j++) {
+                    newLine.Add(lastLine[j + 1] - lastLine[j]);
+                }
+                lines.Add(newLine);
+            }
 
-        
-        
+            for (int j = lines.Count - 2; j >= 0; j--) {
+                var lastElementJ = lines[j][^1];
+                var lastElementJ1 = lines[j + 1][^1];
+                lines[j].Add(lastElementJ + lastElementJ1);
+            }
+
+            result1 += lines[0][^1];
+        }
         
         
     }
-    
+
+    private static bool LastLineIsZeroes(List<List<int>> lines) {
+        var lastLine = lines[^1];
+        return lastLine.All(i => i == 0);
+    }
 }

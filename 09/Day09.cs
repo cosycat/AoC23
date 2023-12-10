@@ -5,7 +5,7 @@ namespace d09y2023;
 
 public static class Day09 {
     private const long ExpectedResultTest1 = 114;
-    private const long ExpectedResultTest2 = 0; // TODO replace
+    private const long ExpectedResultTest2 = 2;
     private const string InputFileName = "inputDay09.txt";
     private const string TestFileName = "testInputDay09.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
@@ -70,9 +70,13 @@ public static class Day09 {
                 var lastElementJ = lines[j][^1];
                 var lastElementJ1 = lines[j + 1][^1];
                 lines[j].Add(lastElementJ + lastElementJ1);
+                var firstElementJ = lines[j][0];
+                var firstElementJ1 = lines[j + 1][0];
+                lines[j].Insert(0, firstElementJ - firstElementJ1);
             }
 
             result1 += lines[0][^1];
+            result2 += lines[0][0];
         }
         
         

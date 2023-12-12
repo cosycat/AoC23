@@ -4,14 +4,14 @@ using System.Text.RegularExpressions;
 namespace d12y2023; 
 
 public static class Day12 {
-    private const long ExpectedResultTest1 = 21 + 1 + 2 + 3 + 2 + 1 + 1 + 1 + 1 + 1 + 1;
-    private const long ExpectedResultTest2 = 0; // TODO replace
+    private const long ExpectedResultTest1 = 21;
+    private const long ExpectedResultTest2 = 525152;
     private const string InputFileName = "inputDay12.txt";
     private const string TestFileName = "testInputDay12.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
-    private const long ActualResult1 = 0; // For ensuring it stays correct, once the actual result is known
-    private const long ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult1 = 7350; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult2 = 200097286528151; // For ensuring it stays correct, once the actual result is known
     
     private const string Success = "✅";
     private const string Fail = "❌";
@@ -56,18 +56,24 @@ public static class Day12 {
         const string mainPattern = $@"(?'line'\S+)\s(?:(?'number'\d+),?)+\s?(?'expected'\d+)?";
         Console.WriteLine($"Regex: {mainPattern}");
         for (int i = 0; i < allLines.Count; i++) {
+            _cache.Clear();
             var totalLine = allLines[i];
-            // if (line.Length == 0) break;
+            if (totalLine.Length == 0) break;
             // Console.WriteLine($"Line {i}: {line}");
             var mainMatch = Regex.Match(totalLine, mainPattern);
             Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == totalLine.Trim(), $"Line {i} does not match {mainMatch.Value}");
             currLine = mainMatch.Groups["line"].Value + ".....";
             var lineSprings = LineFromString((mainMatch.Groups["line"].Value + ""));
             var numbers = mainMatch.Groups["number"].Captures.Select(c => long.Parse(c.Value)).ToList();
+
+            var arrangementsWithCache =
+                CountArrangementsRecursive(lineSprings, numbers, printSolution: false, useCache: true);
+            _cache.Clear();
             
             currResult = 0;
             var countArrangements = CountArrangementsRecursive(lineSprings, numbers, printSolution: false);
             currResult = 0;
+            _cache.Clear();
             var countArrangementsWithMoreDots = CountArrangementsRecursive(LineFromString(currLine), numbers, printSolution: false);
             var expected = mainMatch.Groups["expected"].Success ? long.Parse(mainMatch.Groups["expected"].Value) : -1;
             if (countArrangementsWithMoreDots != countArrangements ||
@@ -76,12 +82,29 @@ public static class Day12 {
                 currResult = 0;
                 // CountArrangementsRecursive(lineSprings, numbers, printSolution: true);
                 Console.WriteLine($"Normal line:");
+                _cache.Clear();
                 CountArrangementsRecursive(lineSprings, numbers, printSolution: true);
                 currResult = 0;
+                _cache.Clear();
                 Console.WriteLine($"With more dots:");
                 CountArrangementsRecursive(LineFromString(currLine), numbers, printSolution: true);
             }
             result1 += countArrangements;
+
+            _cache.Clear();
+            var line5 = mainMatch.Groups["line"].Value;
+            var numbers5 = new List<long>();
+            numbers5.AddRange(numbers);
+            for (int j = 0; j < 4; j++) {
+                line5 += "?" + mainMatch.Groups["line"].Value;
+                numbers5.AddRange(numbers);
+            }
+
+            Console.Write($"Line5 {i}: {line5}, numbers: {string.Join(",", numbers5)}");
+            var lineSprings5 = LineFromString(line5);
+            var res5 = CountArrangementsRecursive(lineSprings5, numbers5, printSolution: false, useCache: true);
+            result2 += res5;
+            Console.WriteLine($" -> {res5}");
         }
         
     }
@@ -107,8 +130,19 @@ public static class Day12 {
                 _ => throw new Exception($"Unknown spring state: {c}")
             }).ToArray();
     }
+    
+    private static Dictionary<(long index, int numbersLeft), long> _cache = new();
 
-    private static long CountArrangementsRecursive(SpringState[] lineSprings, List<long> numbers, long currIndex = 0, bool printSolution = false) {
+    private static long CountArrangementsRecursive(SpringState[] lineSprings, List<long> numbers, long currIndex = 0, bool printSolution = false, bool useCache = true) {
+        if (useCache && _cache.TryGetValue((currIndex, numbers.Count), out long value)) {
+            if (printSolution) {
+                Console.WriteLine($"    Found in cache: ({currIndex},{numbers.Count}) -> {value}");
+            }
+
+            currResult += value;
+            return value;
+        }
+        
         if (printSolution) {
             Console.WriteLine($"    {LineToString(lineSprings)}");
             Console.WriteLine($"    {"".PadLeft((int) currIndex)}^");
@@ -127,9 +161,27 @@ public static class Day12 {
             // return IsValidLine(lineSprings, numbers) ? 1 : 0; // found one solution
         }
         
-        if (numbers.Count > 0 && currIndex + numbers.Sum() + numbers.Count - 1 > lineSprings.Length) return 0; // not enough space left for all the numbers
-        if (numbers.Count > 0 && lineSprings.All(s => s == SpringState.Dot)) return 0; // all springs are operational, but we still have numbers left
-        
+        if (numbers.Count > 0 && currIndex + numbers.Sum() + numbers.Count - 1 > lineSprings.Length) {
+            if (printSolution) {
+                Console.WriteLine($"    Not enough space left for all numbers: {string.Join(",", numbers)}");
+            }
+            return 0; // not enough space left for all the numbers
+        }
+
+        if (numbers.Count > 0 && lineSprings.All(s => s == SpringState.Dot)) {
+            if (printSolution) {
+                Console.WriteLine($"    All springs are operational, but we still have numbers left: {string.Join(",", numbers)}");
+            }
+            return 0; // all springs are operational, but we still have numbers left
+        }
+
+        if (numbers.Count == 0 && lineSprings.Skip((int)currIndex).Any(s => s == SpringState.Hashtag)) {
+            if (printSolution) {
+                Console.WriteLine($"    No numbers left, but we still have operational springs: {string.Join(",", numbers)}");
+            }
+            return 0; // no numbers left, but we still have operational springs
+        }
+
         var currSpring = lineSprings[currIndex];
         switch (currSpring) {
             case SpringState.Dot:
@@ -170,7 +222,7 @@ public static class Day12 {
                 if (currIndex + nextNumber < lineSprings.Length) {
                     lineSprings[currIndex + nextNumber] = prevStates[nextNumber];
                 }
-                
+
                 return resD;
             case SpringState.Unknown:
                 var resU = 0L;
@@ -179,9 +231,17 @@ public static class Day12 {
                 lineSprings[currIndex] = SpringState.Dot;
                 resU += CountArrangementsRecursive(lineSprings, numbers, currIndex, printSolution);
                 lineSprings[currIndex] = SpringState.Unknown;
-                return resU;
+                return ReturnAndStore(resU);
             default:
                 throw new ArgumentOutOfRangeException();
+        }
+        
+        long ReturnAndStore(long result) {
+            Debug.Assert(!_cache.ContainsKey((currIndex, numbers.Count)) || _cache[(currIndex, numbers.Count)] == result, $"Cache already contains key ({currIndex}, {numbers.Count}) with value {_cache[(currIndex, numbers.Count)]} but we want to store {result}");
+            _cache[(currIndex, numbers.Count)] = result;
+            if (printSolution)
+                Console.WriteLine($"    Storing in cache: ({currIndex},{numbers.Count}) -> {result}");
+            return result;
         }
     }
 

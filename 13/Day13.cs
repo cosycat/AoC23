@@ -5,7 +5,7 @@ namespace d13y2023;
 
 public static class Day13 {
     private const long ExpectedResultTest1 = 405;
-    private const long ExpectedResultTest2 = 0; // TODO replace
+    private const long ExpectedResultTest2 = 400;
     private const string InputFileName = "inputDay13.txt";
     private const string TestFileName = "testInputDay13.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
@@ -83,61 +83,60 @@ public static class Day13 {
             }
 
 
-            var vertMatch = false;
+            var isOriginalHorizontalLine = false;
             var possibleMatches = CheckFieldForSymmetry(linesHor);
             if (possibleMatches.Count == 0) {
                 possibleMatches = CheckFieldForSymmetry(linesVert);
-                vertMatch = true;
+                isOriginalHorizontalLine = true;
             }
             Debug.Assert(possibleMatches.Count == 1, $"Not exactly 1 possible match: {string.Join(", ", possibleMatches)}");
 
-            var symmetryLine = possibleMatches[0];
-            Console.WriteLine($"Found Split: {symmetryLine}");
+            var originalSymmetryLine = possibleMatches[0];
+            Console.WriteLine($"Found Split: {originalSymmetryLine} (line is {(isOriginalHorizontalLine ? "horizontal" : "vertical")})");
             
-            result1 += vertMatch ? symmetryLine * 100 : symmetryLine;
+            result1 += isOriginalHorizontalLine ? originalSymmetryLine * 100 : originalSymmetryLine;
 
+            var foundLine = false;
+            for (int y = 0; y < height && !foundLine; y++) {
+                for (int x = 0; x < width && !foundLine; x++) {
+                    var c = linesHor[y][x];
+                    Debug.Assert(c == linesVert[x][y], $"Fields don't match at {x}, {y}");
+                    linesHor[y][x] = c switch {
+                        Fields.Ash => Fields.Rock,
+                        Fields.Rock => Fields.Ash,
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+                    linesVert[x][y] = linesHor[y][x];
 
-            // Regex (didn't manage to find every symmetry line with it)
-            // var r = @"((?<\i>.)\R\k<\i>)?";
-            // var recursiveRegex = CreateRecursiveRegex(r, width - 1).TrimEnd('?');
-            // Console.WriteLine($"rec regex: {recursiveRegex}");
-            // var regex = new Regex($@"(?<mirroredLine>{recursiveRegex})");
-            // Console.WriteLine($"total regex: {regex}");
-            // var possibleMatches = new List<int>();
-            // for (var i = 0; i < lines.Length; i++) {
-            //     var possibleMatchesLine = new List<int>();
-            //     var line = lines[i];
-            //     // var matches = new Regex($"(?<mirroredLine>{recursiveRegex})").Matches(line);
-            //     var matches = regex.Matches(line);
-            //     Debug.Assert(matches.Count > 0, "matches.Count <= 0");
-            //     foreach (Match match in matches) {
-            //         var matchLength = match.Groups["mirroredLine"].Value.Length;
-            //         Debug.Assert(matchLength % 2 == 0, "uneven match");
-            //         var splitAfter = match.Index + (matchLength / 2);
-            //         Console.WriteLine($"line: {line}, match: {match}, mirrored line: {match.Groups["mirroredLine"]}, first half: {match.Groups["firstHalf"]}, index: {match.Index}, splitAfter: {splitAfter}");
-            //         if (matchLength > 0)
-            //             possibleMatchesLine.Add(splitAfter);
-            //     }
-            //
-            //     Console.WriteLine();
-            //     possibleMatches = i == 0 ? possibleMatchesLine : possibleMatches.Intersect(possibleMatchesLine).ToList();
-            //     // Console.WriteLine($"match: {string.Join(", ", matches)} - mirrored line: {string.Join(", ", matches.Select(match => match.Groups["mirroredLine"]))}");
-            // }
-            //
-            // Debug.Assert(possibleMatches.Count < 2, $"more than 1 possible Matches: {string.Join(", ", possibleMatches)}");
-            // Console.WriteLine($"Found Split: {possibleMatches[0]}");
-            //
-            // Console.WriteLine();
+                    var isNewHorizontalLine = false;
+                    var possibleNewMatches = CheckFieldForSymmetry(linesHor);
+                    if (!isOriginalHorizontalLine && possibleNewMatches.Contains(originalSymmetryLine)) {
+                        possibleNewMatches.Remove(originalSymmetryLine);
+                    }
+                    if (possibleNewMatches.Count != 1) {
+                        possibleNewMatches = CheckFieldForSymmetry(linesVert);
+                        if (isOriginalHorizontalLine && possibleNewMatches.Contains(originalSymmetryLine)) {
+                            possibleNewMatches.Remove(originalSymmetryLine);
+                        }
+                        isNewHorizontalLine = true;
+                    }
+                    
+                    if (possibleNewMatches.Count == 1) {
+                        var newSymmetryLine = possibleNewMatches[0];
+                        Console.WriteLine($"Found New Line: {newSymmetryLine} at {x}, {y} (vert: {isNewHorizontalLine})");
+                        result2 += isNewHorizontalLine ? newSymmetryLine * 100 : newSymmetryLine;
+                        foundLine = true;
+                    }
+                    if (possibleNewMatches.Count > 1) {
+                        Console.WriteLine($"Found multiple possible matches: {string.Join(", ", possibleNewMatches)}");
+                    }
+                    linesHor[y][x] = c;
+                    linesVert[x][y] = c;
+                }
+            }
+            Debug.Assert(foundLine, "No new symmetry line found!");
             
-
         }
-        // string CreateRecursiveRegex(string regex, int depth = 0, string recursiveSymbol = @"\R", string indexSymbol = @"\i") {
-        //     if (depth < 0) {
-        //         return "";
-        //     }
-        //     var recString = CreateRecursiveRegex(regex, depth - 1, recursiveSymbol);
-        //     return regex.Replace(@"\R", recString).Replace(indexSymbol, $"{(char)('a' + depth)}");
-        // }
         
     }
 

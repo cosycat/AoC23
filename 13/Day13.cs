@@ -48,40 +48,34 @@ public static class Day13 {
     private static void Solve(string inputFileName, out long result1, out long result2) {
         result1 = 0; 
         result2 = 0;
-        
-        var allLines = File.ReadAllLines(inputFileName).ToList(); // .ToArray();
-        Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
-        var width = allLines[0].Length;
-        var height = allLines.Count; // .Length;
-        
-        // Process input char by char
-        for (int y = 0; y < height; y++) {
-            var line = allLines[y];
-            for (int x = 0; x < width; x++) {
-                var c = line[x];
-                // TODO your code here..
+
+        var puzzles = File.ReadAllText(inputFileName).Split("\n\n");
+
+        foreach (var puzzle in puzzles) {
+            var lines = puzzle.Split("\n");
+            var width = lines[0].Length;
+            var height = lines.Length;
+            var board = new Fields[height,width];
+            //init
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    var c = lines[y][x];
+                    board[y, x] = c switch {
+                        '.' => Fields.Ash,
+                        '#' => Fields.Rock,
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+                }
             }
-        }
-
-        // Process input line by line with regex
-        const string singleInputName = "SingleInput";
-        const string singleInputPattern = @"\d+";
-        const string mainPattern = $@"InputLine \d+:(?:\s*(?'{singleInputName}'{singleInputPattern}),?)+";
-        // Regex for strings like "InputLine 1: 10,  2, 33,  4, 56, 78,  9"
-        Console.WriteLine($"Regex: {mainPattern}");
-        for (int i = 0; i < allLines.Count; i++) {
-            var line = allLines[i];
-            var mainMatch = Regex.Match(line, mainPattern);
-            Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(), $"Line {i} does not match {mainMatch.Value}");
-            var inputs = mainMatch.Groups[singleInputName].Captures.Select(c => long.Parse(c.Value)).ToList();
             
-            // TODO your code here..
+            
         }
-
-        
-        
-        
         
     }
     
+}
+
+enum Fields {
+    Rock,
+    Ash
 }

@@ -6,13 +6,13 @@ namespace d15y2023;
 
 public static class Day15 {
     private const long ExpectedResultTest1 = 1320;
-    private const long ExpectedResultTest2 = 0; // TODO replace
+    private const long ExpectedResultTest2 = 145;
     private const string InputFileName = "inputDay15.txt";
     private const string TestFileName = "testInputDay15.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
-    private const long ActualResult1 = 0; // For ensuring it stays correct, once the actual result is known
-    private const long ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult1 = 497373; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult2 = 259356; // For ensuring it stays correct, once the actual result is known
     
     private const string Success = "✅";
     private const string Fail = "❌";
@@ -53,29 +53,107 @@ public static class Day15 {
         var allLines = File.ReadAllLines(inputFileName).ToList(); // .ToArray();
         Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
 
-        foreach (var line in allLines) {
-            var result = ProcessLine(line);
-            // Console.WriteLine($"res: {result}");
-        }
-        
-        result1 = ProcessLine(allLines[0]);
+        // foreach (var line in allLines) {
+        //     var result = ProcessLine(line);
+        //     Hashmap.Clear();
+        //     // Console.WriteLine($"res: {result}");
+        // }
+
+        (result1, result2) = ProcessLine(allLines[0]);
     }
 
-    private static int ProcessLine(string line) {
+    private static (int totalHash, int focusingPower) ProcessLine(string line) {
         var input = line.Split(',');
         Debug.Assert(input.Length > 0, $"Input line {line} is empty!");
 
-        var total = 0;
-        foreach (var text in input) {
-            var currVal = 0;
-            foreach (var asciiVal in Encoding.ASCII.GetBytes(text)) {
-                currVal += asciiVal;
-                currVal *= 17;
-                currVal %= 256;
-            }
-            total += currVal;
+        var totalHash = 0;
+        // var instructions = new List<Instruction>();
+        List<List< (string name, int value)>> hashmap = new();
+        for (int i = 0; i < 256; i++) {
+            hashmap.Add(new List<(string, int)>());
         }
 
-        return total;
+        foreach (var text in input) {
+            var (hash, labelHash, instruction) = ProcessSingleInput(text);
+            totalHash += hash;
+            // instructions.Add(instruction);
+            Debug.Assert(hashmap[labelHash].Count(x => x.name == instruction.Label) <= 1, $"Hashmap[{labelHash}] contains more than one {instruction.Label}!");
+            switch (instruction.Sign) {
+                case "-":
+                    hashmap[labelHash].RemoveAll(x => string.Equals(x.name, instruction.Label, StringComparison.Ordinal));
+                    break;
+                case "=":
+                    var index = hashmap[labelHash].FindIndex(x =>
+                        string.Equals(x.name, instruction.Label, StringComparison.Ordinal));
+                    if (index >= 0)
+                        hashmap[labelHash][index] = (instruction.Label, instruction.Number);
+                    else
+                        hashmap[labelHash].Add((instruction.Label, instruction.Number));
+                    break;
+            }
+
+            // Console.WriteLine($"After \"{text}\":");
+            // PrintHashmap(hashmap);
+            // Console.WriteLine();
+            
+        }
+
+        var focusingPower = 0;
+        for (int boxNr = 0; boxNr < hashmap.Count; boxNr++) {
+            var box = hashmap[boxNr];
+            if (box.Count == 0)
+                continue;
+            Console.WriteLine($"Box {boxNr + 1}: {string.Join(" ", box.Select(x => $"[{x.name} {x.value}]"))}");
+            for (int i = 0; i < box.Count; i++) {
+                var lens = box[i];
+                focusingPower += (boxNr + 1) * (i + 1) * lens.value;
+            }
+        }
+
+        return (totalHash, focusingPower);
+    }
+
+    public static void PrintHashmap(List<List<(string name, int value)>> hashmap) {
+        for (int boxNr = 0; boxNr < hashmap.Count; boxNr++) {
+            var box = hashmap[boxNr];
+            if (box.Count == 0)
+                continue;
+            Console.WriteLine($"Box {boxNr}: {string.Join(", ", box.Select(x => $"{x.name}({x.value})"))}");
+        }
+    }
+    
+    private static (int totalHash, int labelHash, Instruction) ProcessSingleInput(string text) {
+        var totalHash = 0;
+        var labelHash = 0;
+        foreach (var asciiVal in Encoding.ASCII.GetBytes(text)) {
+            totalHash += asciiVal;
+            totalHash *= 17;
+            totalHash %= 256;
+        }
+        
+        var match = Regex.Match(text, @"(?'label'\w+)((?'sign'\-)|((?'sign'\=)(?'number'\d+)))");
+        Debug.Assert(match.Success, $"Input {text} is not valid!");
+        var label = match.Groups["label"].Value;
+        var sign = match.Groups["sign"].Value;
+        var number = match.Groups["number"].Value;
+
+        foreach (var labelAscii in Encoding.ASCII.GetBytes(label)) {
+            labelHash += labelAscii;
+            labelHash *= 17;
+            labelHash %= 256;
+        }
+
+        return (totalHash, labelHash, new Instruction(label, sign, number.Length == 0 ? -1 : int.Parse(number)));
+    }
+}
+
+internal class Instruction {
+    public string Label { get; }
+    public string Sign { get; }
+    public int Number { get; }
+    public Instruction(string label, string sign, int number) {
+        Label = label;
+        Sign = sign;
+        Number = number;
     }
 }

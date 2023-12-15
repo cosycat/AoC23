@@ -1,10 +1,11 @@
 using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace d15y2023; 
 
 public static class Day15 {
-    private const long ExpectedResultTest1 = 0; // TODO replace
+    private const long ExpectedResultTest1 = 1320;
     private const long ExpectedResultTest2 = 0; // TODO replace
     private const string InputFileName = "inputDay15.txt";
     private const string TestFileName = "testInputDay15.txt";
@@ -51,37 +52,30 @@ public static class Day15 {
         
         var allLines = File.ReadAllLines(inputFileName).ToList(); // .ToArray();
         Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
-        var width = allLines[0].Length;
-        var height = allLines.Count; // .Length;
-        
-        // Process input char by char
-        for (int y = 0; y < height; y++) {
-            var line = allLines[y];
-            for (int x = 0; x < width; x++) {
-                var c = line[x];
-                // TODO your code here..
-            }
-        }
 
-        // Process input line by line with regex
-        const string singleInputName = "SingleInput";
-        const string singleInputPattern = @"\d+";
-        const string mainPattern = $@"InputLine \d+:(?:\s*(?'{singleInputName}'{singleInputPattern}),?)+";
-        // Regex for strings like "InputLine 1: 10,  2, 33,  4, 56, 78,  9"
-        Console.WriteLine($"Regex: {mainPattern}");
-        for (int i = 0; i < allLines.Count; i++) {
-            var line = allLines[i];
-            var mainMatch = Regex.Match(line, mainPattern);
-            Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(), $"Line {i} does not match {mainMatch.Value}");
-            var inputs = mainMatch.Groups[singleInputName].Captures.Select(c => long.Parse(c.Value)).ToList();
-            
-            // TODO your code here..
+        foreach (var line in allLines) {
+            var result = ProcessLine(line);
+            // Console.WriteLine($"res: {result}");
         }
-
         
-        
-        
-        
+        result1 = ProcessLine(allLines[0]);
     }
-    
+
+    private static int ProcessLine(string line) {
+        var input = line.Split(',');
+        Debug.Assert(input.Length > 0, $"Input line {line} is empty!");
+
+        var total = 0;
+        foreach (var text in input) {
+            var currVal = 0;
+            foreach (var asciiVal in Encoding.ASCII.GetBytes(text)) {
+                currVal += asciiVal;
+                currVal *= 17;
+                currVal %= 256;
+            }
+            total += currVal;
+        }
+
+        return total;
+    }
 }

@@ -53,12 +53,6 @@ public static class Day15 {
         var allLines = File.ReadAllLines(inputFileName).ToList(); // .ToArray();
         Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
 
-        // foreach (var line in allLines) {
-        //     var result = ProcessLine(line);
-        //     Hashmap.Clear();
-        //     // Console.WriteLine($"res: {result}");
-        // }
-
         (result1, result2) = ProcessLine(allLines[0]);
     }
 
@@ -67,7 +61,6 @@ public static class Day15 {
         Debug.Assert(input.Length > 0, $"Input line {line} is empty!");
 
         var totalHash = 0;
-        // var instructions = new List<Instruction>();
         List<List< (string name, int value)>> hashmap = new();
         for (int i = 0; i < 256; i++) {
             hashmap.Add(new List<(string, int)>());
@@ -76,7 +69,6 @@ public static class Day15 {
         foreach (var text in input) {
             var (hash, labelHash, instruction) = ProcessSingleInput(text);
             totalHash += hash;
-            // instructions.Add(instruction);
             Debug.Assert(hashmap[labelHash].Count(x => x.name == instruction.Label) <= 1, $"Hashmap[{labelHash}] contains more than one {instruction.Label}!");
             switch (instruction.Sign) {
                 case "-":
@@ -103,7 +95,6 @@ public static class Day15 {
             var box = hashmap[boxNr];
             if (box.Count == 0)
                 continue;
-            Console.WriteLine($"Box {boxNr + 1}: {string.Join(" ", box.Select(x => $"[{x.name} {x.value}]"))}");
             for (int i = 0; i < box.Count; i++) {
                 var lens = box[i];
                 focusingPower += (boxNr + 1) * (i + 1) * lens.value;

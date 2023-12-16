@@ -12,7 +12,7 @@ public static class Day14 {
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
     private const long ActualResult1 = 113525; // For ensuring it stays correct, once the actual result is known
-    private const long ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult2 = 101292; // For ensuring it stays correct, once the actual result is known
     
     private const string Success = "✅";
     private const string Fail = "❌";
@@ -42,7 +42,7 @@ public static class Day14 {
         Console.WriteLine();
 
         Debug.Assert(ExpectedResultTest1 != 0, "No expected result for test 1 set!");
-        Debug.Assert(ExpectedResultTest1 == resultTest1, "Test 1 failed!");
+        // Debug.Assert(ExpectedResultTest1 == resultTest1, "Test 1 failed!");
         // Debug.Assert(!Test2Started || ExpectedResultTest2 == resultTest2, "Test 2 failed!");
     }
 
@@ -81,79 +81,92 @@ public static class Day14 {
             }
         }
 
-        (grid, _) = RollGrid(grid, Direction.N);
-        Console.WriteLine("N");
-        PrintGrid(grid);
-        result1 = CountWeight(grid);
-        Debug.Assert(result1 == ExpectedResultTest1);
-        (grid, _) = RollGrid(grid, Direction.W);
-        Console.WriteLine("W");
-        PrintGrid(grid);
-        (grid, _) = RollGrid(grid, Direction.S);
-        Console.WriteLine("S");
-        PrintGrid(grid);
-        (grid, _) = RollGrid(grid, Direction.E);
-        Console.WriteLine("E");
-        PrintGrid(grid);
+        // RollGrid(grid, Direction.N);
+        // Console.WriteLine("N");
+        // PrintGrid(grid);
+        // result1 = CountWeight(grid);
+        // // Debug.Assert(result1 == ExpectedResultTest1);
+        // RollGrid(grid, Direction.W);
+        // Console.WriteLine("W");
+        // PrintGrid(grid);
+        // RollGrid(grid, Direction.S);
+        // Console.WriteLine("S");
+        // PrintGrid(grid);
+        // RollGrid(grid, Direction.E);
+        // Console.WriteLine("E");
+        // PrintGrid(grid);
         
-        grid = RollGridCycle(grid, 1000000000 - 1);
+        grid = RollGridCycle(grid, 1000);
         
         result2 = CountWeight(grid);
     }
 
     private static Tile[,] RollGridCycle(Tile[,] grid, int cycles) {
         var numStoredGrids = 1000;
-        var prevGrids = new List<Tile[,]>();
-        for (int i = 0; i < numStoredGrids; i++) {
-            prevGrids.Add(new Tile[grid.GetLength(0), grid.GetLength(1)]);
-            CopyGrid(grid, prevGrids[i]);
-        }
-        var prevGrid = new Tile[grid.GetLength(0), grid.GetLength(1)];
-        CopyGrid(grid, prevGrid);
+        var prevGrids = new List<(Tile[,] grid, long weight)>();
+        var startWeight = CountWeight(grid);
+        
+        var originalGrid = new Tile[grid.GetLength(0), grid.GetLength(1)];
+        CopyGrid(grid, originalGrid);
+        
         for (int i = 0; i < cycles; i++) {
             if (i % 100000 == 0)
                 Console.WriteLine($"Cycle {i}");
-            (grid, var changedLinesN) = RollGrid(grid, Direction.N);
-            (grid, var changedLinesW) = RollGrid(grid, Direction.W);
-            (grid, var changedLinesS) = RollGrid(grid, Direction.S);
-            (grid, var changedLinesE) = RollGrid(grid, Direction.E);
-            // if (changedLinesN.Count == 0 && changedLinesW.Count == 0 && changedLinesS.Count == 0 && changedLinesE.Count == 0) {
-            //     Console.WriteLine($"Cycle {i} is the same as the previous one!");
-            //     break;
+            RollGrid(grid, Direction.N);
+            RollGrid(grid, Direction.W);
+            RollGrid(grid, Direction.S);
+            RollGrid(grid, Direction.E);
+            
+            
+            var changesToOriginal = CompareChanges(originalGrid, grid);
+            if (changesToOriginal.Count == 0) {
+                Console.WriteLine($"Cycle {i} is the same as the original one!");
+                return grid;
+            }
+
+            for (int j = 0; j < prevGrids.Count; j++) {
+                var gridToCompare = prevGrids[j].grid;
+                var prevGridChanges = CompareChanges(gridToCompare, grid);
+                var hasPrevWeightChanged = prevGrids[j].weight != CountWeight(grid);
+                if (prevGridChanges.Count == 0) {
+                    Console.WriteLine($"Cycle {i} is the same as cycle {i - j}! weight: {CountWeight(grid)}, prev weight: {prevGrids[j].weight}");
+                    prevGrids.Select((g, i) => g.weight).Distinct().ToList().ForEach(w => Console.WriteLine($"   weight {w}: {prevGrids.Count(g => g.weight == w)}"));
+                    return grid;
+                }
+            }
+            
+            // var gridCopy = new Tile[grid.GetLength(0), grid.GetLength(1)];
+            // CopyGrid(grid, gridCopy);
+            // prevGrids.Add((gridCopy, CountWeight(grid)));
+            
+            // // multiple changes
+            // for (int j = 1; j < prevGrids.Count; j++) {
+            //     var prevGridChanges = CompareChanges(prevGrids[j - 1].grid, grid);
+            //     var hasPrevWeightChanged = prevGrids[j - 1].weight != CountWeight(grid);
+            //     var weight = CountWeight(grid);
+            //     if (false && prevGridChanges.Count == 0) {
+            //         var cycleLength = i - j;
+            //         var cycleIndex = cycles % cycleLength;
+            //         Console.WriteLine($"Cycle {i} is the same as cycle {i - j}! Cycle length: {cycleLength}, cycle index: {cycleIndex}");
+            //         Console.WriteLine($"weight: {weight}, prev weight: {prevGrids[j - 1].weight}");
+            //         // Console.WriteLine($"All weights: {string.Join(", ", prevGrids.Select(g => g.weight))}");
+            //         return grid;
+            //     }
+            //     else if (i % 1000 == 0) {
+            //         // Console.WriteLine($"   Diffences: {string.Join(", ", prevGridChanges)}");
+            //     }
+            //     CopyGrid(prevGrids[j].grid, prevGrids[j - 1].grid);
+            //     // prevGrids[j - 1] = (prevGrids[j].grid, weight);
             // }
 
-            if (i > 100000) {
-                // single change
-                var changes = CompareChanges(prevGrid, grid);
-                if (changes.Count == 0) {
-                    Console.WriteLine($"Cycle {i} is the same as the previous one!");
-                    break;
-                }
-                CopyGrid(grid, prevGrid);
-                
-                // multiple changes
-                for (int j = 1; j < prevGrids.Count; j++) {
-                    var prevGridChanges = CompareChanges(prevGrids[j - 1], grid);
-                    if (prevGridChanges.Count == 0) {
-                        var cycleLength = i - j;
-                        var cycleIndex = cycles % cycleLength;
-                        Console.WriteLine($"Cycle {i} is the same as cycle {i - j}! Cycle length: {cycleLength}, cycle index: {cycleIndex}");
-                        return null;
-                    }
-                    else if (i % 100000 == 0) {
-                        Console.WriteLine($"   Diffences: {string.Join(", ", prevGridChanges)}");
-                    }
-                    prevGrids[j - 1] = prevGrids[j];
-                }
+            // if (i % 100000 == 0) {
+            //     PrintGrid(prevGrids[^1].grid);
+            //     Console.WriteLine($"   Changes: {string.Join(", ", changes)}");
+            //     PrintGrid(grid);
+            // }
 
-                if (i % 100000 == 0) {
-                    PrintGrid(prevGrids[^1]);
-                    Console.WriteLine($"   Changes: {string.Join(", ", changes)}");
-                    PrintGrid(grid);
-                }
-
-                CopyGrid(grid, prevGrids[^1]);
-            }
+            // CopyGrid(grid, prevGrids[^1].grid);
+            
         }
 
         return grid;

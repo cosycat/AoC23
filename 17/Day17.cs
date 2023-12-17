@@ -5,12 +5,12 @@ namespace d17y2023;
 
 public static class Day17 {
     private const long ExpectedResultTest1 = 102;
-    private const long ExpectedResultTest2 = 0; // TODO replace
+    private const long ExpectedResultTest2 = 94;
     private const string InputFileName = "inputDay17.txt";
     private const string TestFileName = "testInputDay17.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
-    private const long ActualResult1 = 0; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult1 = 936; // For ensuring it stays correct, once the actual result is known
     private const long ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
     
     private const string Success = "✅";
@@ -72,6 +72,12 @@ public static class Day17 {
 
         var usedHeadLossToGuess = minHeatLoss;
 
+        FindPath(ref result1, width, height, usedHeadLossToGuess, grid);
+        FindPath(ref result2, width, height, usedHeadLossToGuess, grid, 4, 10);
+        
+    }
+
+    private static void FindPath(ref long res, int width, int height, int usedHeadLossToGuess, int[,] grid, int minSteps = 1, int maxSteps = 3) {
         var currentPaths = new PriorityQueue<PathPosData, int>();
         
         var starPosRight = new PathPosData { X = 0, Y = 0, HeatLoss = 0, NextDirections = Directions.LeftRight };
@@ -92,10 +98,10 @@ public static class Day17 {
             
             // Console.WriteLine($"Current path: {currentPathPos.X}, {currentPathPos.Y}, {currentPathPos.HeatLoss}, {currentPathPos.NextDirections}");
             if (currentPathPos.X == width - 1 && currentPathPos.Y == height - 1) {
-                result1 = currentPathPos.HeatLoss;
+                res = currentPathPos.HeatLoss;
                 break;
             }
-            foreach (var nextPathPos in GetNextTiles(grid, currentPathPos)) {
+            foreach (var nextPathPos in GetNextTiles(grid, currentPathPos, minSteps, maxSteps)) {
                 if (visited.TryGetValue((nextPathPos.X, nextPathPos.Y, nextPathPos.NextDirections), out var visitedData2)) {
                     if (visitedData2.heatLoss <= nextPathPos.HeatLoss) {
                         continue;
@@ -106,7 +112,7 @@ public static class Day17 {
             }
         }
 
-        Console.WriteLine($"Result 1: {result1}");
+        Console.WriteLine($"Result 1: {res}");
 
         // foreach (var kvp in visited) {
         //     var tile = kvp.Key;
@@ -156,7 +162,7 @@ public static class Day17 {
         }
     }
 
-    private static List<PathPosData> GetNextTiles(int[,] grid, PathPosData currentPathPos) {
+    private static List<PathPosData> GetNextTiles(int[,] grid, PathPosData currentPathPos, int minSteps, int maxSteps) {
         var x = currentPathPos.X;
         var y = currentPathPos.Y;
         var currentHeatLoss = currentPathPos.HeatLoss;
@@ -166,24 +172,44 @@ public static class Day17 {
         switch (directions) {
             case Directions.LeftRight:
                 var addedHeatLoss = 0;
-                for (int newX = x - 1; newX >= Math.Max(0, x - 3); newX--) {
+                for (int i = 1; i < minSteps; i++) {
+                    if (x - i < 0)
+                        break;
+                    addedHeatLoss += grid[y, x - i];
+                }
+                for (int newX = x - minSteps; newX >= Math.Max(0, x - maxSteps); newX--) {
                     addedHeatLoss += grid[y, newX];
                     nextPos.Add(new PathPosData(){X = newX, Y = y, HeatLoss = currentHeatLoss + addedHeatLoss, NextDirections = Directions.UpDown});
                 }
                 addedHeatLoss = 0;
-                for (int newX = x + 1; newX <= Math.Min(x + 3, grid.GetLength(1) - 1); newX++) {
+                for (int i = 1; i < minSteps; i++) {
+                    if (x + i >= grid.GetLength(1))
+                        break;
+                    addedHeatLoss += grid[y, x + i];
+                }
+                for (int newX = x + minSteps; newX <= Math.Min(x + maxSteps, grid.GetLength(1) - 1); newX++) {
                     addedHeatLoss += grid[y, newX];
                     nextPos.Add(new PathPosData(){X = newX, Y = y, HeatLoss = currentHeatLoss + addedHeatLoss, NextDirections = Directions.UpDown});
                 }
                 break;
             case Directions.UpDown:
                 addedHeatLoss = 0;
-                for (int newY = y - 1; newY >= Math.Max(0, y - 3); newY--) {
+                for (int i = 1; i < minSteps; i++) {
+                    if (y - i < 0)
+                        break;
+                    addedHeatLoss += grid[y - i, x];
+                }
+                for (int newY = y - minSteps; newY >= Math.Max(0, y - maxSteps); newY--) {
                     addedHeatLoss += grid[newY, x];
                     nextPos.Add(new PathPosData {X = x, Y = newY, HeatLoss = currentHeatLoss + addedHeatLoss, NextDirections = Directions.LeftRight});
                 }
                 addedHeatLoss = 0;
-                for (int newY = y + 1; newY <= Math.Min(y + 3, grid.GetLength(0) - 1); newY++) {
+                for (int i = 1; i < minSteps; i++) {
+                    if (y + i >= grid.GetLength(0))
+                        break;
+                    addedHeatLoss += grid[y + i, x];
+                }
+                for (int newY = y + minSteps; newY <= Math.Min(y + maxSteps, grid.GetLength(0) - 1); newY++) {
                     addedHeatLoss += grid[newY, x];
                     nextPos.Add(new PathPosData {X = x, Y = newY, HeatLoss = currentHeatLoss + addedHeatLoss, NextDirections = Directions.LeftRight});
                 }

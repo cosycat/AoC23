@@ -6,12 +6,12 @@ namespace d18y2023;
 
 public static class Day18 {
     private const long ExpectedResultTest1 = 62;
-    private const long ExpectedResultTest2 = 0; // TODO replace
+    private const long ExpectedResultTest2 = 952408144115;
     private const string InputFileName = "inputDay18.txt";
     private const string TestFileName = "testInputDay18.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
-    private const long ActualResult1 = 0; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult1 = 56678; // For ensuring it stays correct, once the actual result is known
     private const long ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
     
     private const string Success = "✅";
@@ -54,18 +54,26 @@ public static class Day18 {
         Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
 
         // Process input line by line with regex
-        const string singleColorCode = @"[0-9a-f]{2}";
-        const string colorCode = $@"#(?<r>{singleColorCode})(?<g>{singleColorCode})(?<b>{singleColorCode})";
-        const string mainPattern = $@"(?<direction>[UDLR])\s(?<distance>\d+)\s\({colorCode}\)";
+        const string colorCode = @"";
+        const string mainPattern = @"(?<direction>[UDLR])\s(?<distance>\d+)\s\(#(?<distance2>[0-9a-f]{5})(?<direction2>[0-9a-f])\)";
         // Regex for strings like "InputLine 1: 10,  2, 33,  4, 56, 78,  9"
         Console.WriteLine($"Regex: {mainPattern}");
 
-        List<List<Tile>> map = new();
+        List<List<Tile>> map1 = new();
+        List<List<Tile>> map2 = new();
 
-        map.Add(new List<Tile>());
-        map[0].Add(new Tile(true));
+        map1.Add(new List<Tile>());
+        map1[0].Add(new Tile(true));
+        map2.Add(new List<Tile>());
+        map2[0].Add(new Tile(true));
 
-        (int x, int y) currPos = (0, 0);
+        (int x, int y) currPos1 = (0, 0);
+        
+        List<(long skipStartX, long skipEndX)> skipped = new();
+        Dictionary<int, long> xSolver = new();
+        Dictionary<int, long> ySolver = new();
+        
+        var instructions2 = new List<(Direction direction, int distance)>();
 
         for (int i = 0; i < allLines.Count; i++) {
             var line = allLines[i];
@@ -77,6 +85,7 @@ public static class Day18 {
             Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(),
                 $"Line {i} does not match {mainMatch.Value}");
 
+            // PART 1
             var direction = mainMatch.Groups["direction"].Value switch {
                 "U" => Direction.Up,
                 "D" => Direction.Down,
@@ -84,62 +93,76 @@ public static class Day18 {
                 "R" => Direction.Right,
                 _ => throw new Exception($"Unknown direction {mainMatch.Groups["direction"].Value}")
             };
-            // if (i == 0) {
-            //     map[0][0].FilledFrom = direction;
-            // }
-
             var distance = int.Parse(mainMatch.Groups["distance"].Value);
-
-            var colorR = int.Parse(mainMatch.Groups["r"].Value, NumberStyles.HexNumber);
-            var colorG = int.Parse(mainMatch.Groups["g"].Value, NumberStyles.HexNumber);
-            var colorB = int.Parse(mainMatch.Groups["b"].Value, NumberStyles.HexNumber);
-            var color = new Color(colorR, colorG, colorB);
-
             for (int j = 0; j < distance; j++) {
-                currPos = DigInDirection(map, currPos, direction, color);
+                currPos1 = DigInDirection(map1, currPos1, direction);
             }
-
-            // Console.WriteLine($"Line {i}: {line} -> {mainMatch.Groups["direction"].Value} {mainMatch.Groups["distance"].Value} ({colorR}, {colorG}, {colorB})");
-            // PrintMap(map);
+            
+            // PART 2
+            var direction2 = mainMatch.Groups["direction2"].Value switch {
+                "0" => Direction.Right,
+                "1" => Direction.Down,
+                "2" => Direction.Left,
+                "3" => Direction.Up,
+                _ => throw new Exception($"Unknown direction {mainMatch.Groups["direction2"].Value}")
+            };
+            var distance2 = int.Parse(mainMatch.Groups["distance2"].Value, NumberStyles.HexNumber);
+            instructions2.Add((direction2, distance2));
         }
 
-        PrintMap(map);
+        // PrintMap(map1);
 
-        // tried to hack fill it. didn't work.
-        for (int y = 0; y < map.Count; y++) {
+        result1 = CountInside(map1);
+        
+        
+        // PART 2
+        List<(int startX, int endX)> xRanges = new();
+        (long x, long y) currPos2 = (0, 0);
+
+        for (int i = 0; i < instructions2.Count; i++) {
+            var instruction = instructions2[i];
+        }
+        
+    }
+
+    private static long CountInside(List<List<Tile>> map1) {
+        long result1;
+        
+        // fill inside
+        for (int y = 0; y < map1.Count; y++) {
             var inside = false;
-            for (int x = 0; x < map[0].Count; x++) {
-                var tile = map[y][x];
+            for (int x = 0; x < map1[0].Count; x++) {
+                var tile = map1[y][x];
                 if (tile.IsDug) {
                     var prevDirection = tile.FilledFrom;
                     if (tile.FilledFrom is Direction.Up or Direction.Down) {
                         inside = !inside;
-                        if (x + 1 >= map[y].Count || !map[y][x + 1].IsDug) continue;
-                        if ((map[y][x + 1].FilledFrom == Direction.Up || map[y][x + 1].FilledFrom == Direction.Down) && map[y][x + 1].FilledFrom != prevDirection) continue; // just a normal wall
-                        Console.WriteLine($"{y}: Started hor row at {x}, {y}! prev: {prevDirection}, curr: {map[y][x].FilledFrom}");
+                        if (x + 1 >= map1[y].Count || !map1[y][x + 1].IsDug) continue;
+                        if ((map1[y][x + 1].FilledFrom == Direction.Up || map1[y][x + 1].FilledFrom == Direction.Down) && map1[y][x + 1].FilledFrom != prevDirection) continue; // just a normal wall
+                        // Console.WriteLine($"{y}: Started hor row at {x}, {y}! prev: {prevDirection}, curr: {map1[y][x].FilledFrom}");
                         x++;
                     }
 
-                    while (x < map[y].Count &&
-                           map[y][x].IsDug && (map[y][x].FilledFrom == Direction.Right || 
-                                               map[y][x].FilledFrom == Direction.Left)) {
+                    while (x < map1[y].Count &&
+                           map1[y][x].IsDug && (map1[y][x].FilledFrom == Direction.Right || 
+                                                map1[y][x].FilledFrom == Direction.Left)) {
                         x++;
                     }
                     
-                    Debug.Assert(x < map[y].Count && map[y][x].IsDug && (map[y][x].FilledFrom == Direction.Up || map[y][x].FilledFrom == Direction.Down),
+                    Debug.Assert(x < map1[y].Count && map1[y][x].IsDug && (map1[y][x].FilledFrom == Direction.Up || map1[y][x].FilledFrom == Direction.Down),
                         $"Tile at {x}, {y} at end of hor row should be up or down!");
                     
-                    if (prevDirection == Direction.Up && map[y][x].FilledFrom == Direction.Down ||
-                        prevDirection == Direction.Down && map[y][x].FilledFrom == Direction.Up) {
-                        Console.WriteLine($"Row {y}: Tile at {x} is a 180 turn!");
+                    if (prevDirection == Direction.Up && map1[y][x].FilledFrom == Direction.Down ||
+                        prevDirection == Direction.Down && map1[y][x].FilledFrom == Direction.Up) {
+                        // Console.WriteLine($"Row {y}: Tile at {x} is a 180 turn!");
                         inside = !inside; // it was just a 180 turn
                     }
 
-                    if (prevDirection == map[y][x].FilledFrom) {
-                        Console.WriteLine($"Row {y}: Tile at {x} is a straight line! prev: {prevDirection}, curr: {map[y][x].FilledFrom}");
+                    if (prevDirection == map1[y][x].FilledFrom) {
+                        // Console.WriteLine($"Row {y}: Tile at {x} is a straight line! prev: {prevDirection}, curr: {map1[y][x].FilledFrom}");
                     }
-                    if (prevDirection != map[y][x].FilledFrom) {
-                        Console.WriteLine($"Row {y}: Tile at {x} is a turn! prev: {prevDirection}, curr: {map[y][x].FilledFrom}");
+                    if (prevDirection != map1[y][x].FilledFrom) {
+                        // Console.WriteLine($"Row {y}: Tile at {x} is a turn! prev: {prevDirection}, curr: {map1[y][x].FilledFrom}");
                     }
                     
                     
@@ -153,27 +176,19 @@ public static class Day18 {
                     //     x++;
                     // }
                 }
-                if (x < map[y].Count && inside) {
-                    map[y][x].IsDug = true;
+                if (x < map1[y].Count && inside) {
+                    map1[y][x].IsDug = true;
                 }
             }
         }
-
-        (int x, int y) startPos = (0, 1);
-        while (!map[startPos.y][startPos.x].IsDug) {
-            startPos.x++;
-        }
         
-        // FloodFill(map,  );
+        PrintMap(map1);
         
-        PrintMap(map);
-        
-        result1 = map.Sum(row => row.Count(tile => tile.IsDug));
-        
-        
+        result1 = map1.Sum(row => row.Count(tile => tile.IsDug));
+        return result1;
     }
 
-    private static (int x, int y) DigInDirection(List<List<Tile>> map, (int x, int y) currPos, Direction direction, Color color) {
+    private static (int x, int y) DigInDirection(List<List<Tile>> map, (int x, int y) currPos, Direction direction) {
         (int x, int y) newPos;
         switch (direction) {
             case Direction.Up:
@@ -274,6 +289,8 @@ public class Tile {
 
     public bool IsDug { get; set; }
     public Direction FilledFrom { get; set; } = Direction.None;
+
+    public long X { get; set; } = 0;
 }
 
 public struct Color {

@@ -245,19 +245,19 @@ public class Instruction {
     }
     
     private static int _indent = 0;
-    
     private static string Indent => new(' ', _indent * 4);
+    private const bool UseDebug = false;
 
     public void CalculateForAllRules(List<InputRange> acceptingRanges, List<InputRange> rejectingRanges, InputRange undecidedRange) {
-        Console.WriteLine($"{Indent}➡️Calculating for {Name} with undecided range {undecidedRange}");
+        if (UseDebug) Console.WriteLine($"{Indent}➡️Calculating for {Name} with undecided range {undecidedRange}");
         
         foreach (var rule in Rules) {
             if (undecidedRange.IsAllEmpty) {
-                Console.WriteLine($"{Indent}<-Undecided range {undecidedRange} is empty, returning");
+                if (UseDebug) Console.WriteLine($"{Indent}<-Undecided range {undecidedRange} is empty, returning");
                 return;
             }
 
-            Console.WriteLine($"{Indent}  Calculating for rule {rule.Part} {(rule.SmallerThan ? "<" : ">")} {rule.Limit} : {rule.NextInstructionName}");
+            if (UseDebug) Console.WriteLine($"{Indent}  Calculating for rule {rule.Part} {(rule.SmallerThan ? "<" : ">")} {rule.Limit} : {rule.NextInstructionName}");
 
             var relevantRange = rule.Part switch {
                 RulePart.x => undecidedRange.X,
@@ -268,7 +268,7 @@ public class Instruction {
             };
             if (rule.Limit <= relevantRange.Start.Value && rule.SmallerThan || rule.Limit >= relevantRange.End.Value && !rule.SmallerThan) { // TODO < or <= ?
                 // rule is irrelevant
-                Console.WriteLine($"{Indent}  <-Rule is irrelevant");
+                if (UseDebug) Console.WriteLine($"{Indent}  <-Rule is irrelevant");
                 continue;
             }
             var lowerRange = new Range(relevantRange.Start.Value, rule.SmallerThan ? rule.Limit - 1 : rule.Limit);
@@ -283,12 +283,12 @@ public class Instruction {
             
             if (rule.NextInstructionName is "A") {
                 acceptingRanges.Add(ruleRelevantRange);
-                Console.WriteLine($"{Indent}  <-Rule A: Returning for {ruleRelevantRange}");
+                if (UseDebug) Console.WriteLine($"{Indent}  <-Rule A: Returning for {ruleRelevantRange}");
                 continue;
             }
             if (rule.NextInstructionName is "R") {
                 rejectingRanges.Add(ruleRelevantRange);
-                Console.WriteLine($"{Indent}  <-Rule R: Returning for {ruleRelevantRange}");
+                if (UseDebug) Console.WriteLine($"{Indent}  <-Rule R: Returning for {ruleRelevantRange}");
                 continue;
             }
 
@@ -300,19 +300,19 @@ public class Instruction {
         }
 
         if (undecidedRange.IsAllEmpty) {
-            Console.WriteLine($"{Indent}<-Undecided range {undecidedRange} is empty, returning");
+            if (UseDebug) Console.WriteLine($"{Indent}<-Undecided range {undecidedRange} is empty, returning");
             return;
         }
 
         if (FinalRuleName is "A") {
             acceptingRanges.Add(undecidedRange);
-            Console.WriteLine($"{Indent}<-<-Final Rule A: Returning");
+            if (UseDebug) Console.WriteLine($"{Indent}<-<-Final Rule A: Returning");
             return;
         }
 
         if (FinalRuleName is "R") {
             rejectingRanges.Add(undecidedRange);
-            Console.WriteLine($"{Indent}<-<-Final Rule R: Returning");
+            if (UseDebug) Console.WriteLine($"{Indent}<-<-Final Rule R: Returning");
             return;
         }
 
@@ -321,7 +321,7 @@ public class Instruction {
         FinalInstruction!.CalculateForAllRules(acceptingRanges, rejectingRanges, undecidedRange);
         _indent--;
 
-        Console.WriteLine($"{Indent}<-Returning");
+        if (UseDebug) Console.WriteLine($"{Indent}<-Returning");
         
     }
 }

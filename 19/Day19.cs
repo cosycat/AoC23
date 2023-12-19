@@ -11,7 +11,7 @@ public static class Day19 {
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
     private const long ActualResult1 = 330820; // For ensuring it stays correct, once the actual result is known
-    private const long ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult2 = 123972546935551; // For ensuring it stays correct, once the actual result is known
     
     private const string Success = "✅";
     private const string Fail = "❌";
@@ -243,13 +243,21 @@ public class Instruction {
 
         return FinalRuleName;
     }
+    
+    private static int _indent = 0;
+    
+    private static string Indent => new(' ', _indent * 4);
 
     public void CalculateForAllRules(List<InputRange> acceptingRanges, List<InputRange> rejectingRanges, InputRange undecidedRange) {
+        Console.WriteLine($"{Indent}➡️Calculating for {Name} with undecided range {undecidedRange}");
         
         foreach (var rule in Rules) {
             if (undecidedRange.IsAllEmpty) {
+                Console.WriteLine($"{Indent}<-Undecided range {undecidedRange} is empty, returning");
                 return;
             }
+
+            Console.WriteLine($"{Indent}  Calculating for rule {rule.Part} {(rule.SmallerThan ? "<" : ">")} {rule.Limit} : {rule.NextInstructionName}");
 
             var relevantRange = rule.Part switch {
                 RulePart.x => undecidedRange.X,
@@ -260,6 +268,7 @@ public class Instruction {
             };
             if (rule.Limit <= relevantRange.Start.Value && rule.SmallerThan || rule.Limit >= relevantRange.End.Value && !rule.SmallerThan) { // TODO < or <= ?
                 // rule is irrelevant
+                Console.WriteLine($"{Indent}  <-Rule is irrelevant");
                 continue;
             }
             var lowerRange = new Range(relevantRange.Start.Value, rule.SmallerThan ? rule.Limit - 1 : rule.Limit);
@@ -273,27 +282,46 @@ public class Instruction {
             var ruleRelevantRange = rule.SmallerThan ? lowerInputRange : upperInputRange;
             
             if (rule.NextInstructionName is "A") {
-                acceptingRanges.Add(undecidedRange);
-            } else if (rule.NextInstructionName is "R") {
-                rejectingRanges.Add(undecidedRange);
-            } else {
-                Debug.Assert(rule.NextInstruction is not null, "rule.NextRule is not null");
-                rule.NextInstruction!.CalculateForAllRules(acceptingRanges, rejectingRanges, ruleRelevantRange);
+                acceptingRanges.Add(ruleRelevantRange);
+                Console.WriteLine($"{Indent}  <-Rule A: Returning for {ruleRelevantRange}");
+                continue;
             }
-            
+            if (rule.NextInstructionName is "R") {
+                rejectingRanges.Add(ruleRelevantRange);
+                Console.WriteLine($"{Indent}  <-Rule R: Returning for {ruleRelevantRange}");
+                continue;
+            }
+
+            Debug.Assert(rule.NextInstruction is not null, "rule.NextRule is not null");
+            _indent++;
+            rule.NextInstruction!.CalculateForAllRules(acceptingRanges, rejectingRanges, ruleRelevantRange);
+            _indent--;
+
         }
 
-        if (undecidedRange.IsAllEmpty)
+        if (undecidedRange.IsAllEmpty) {
+            Console.WriteLine($"{Indent}<-Undecided range {undecidedRange} is empty, returning");
             return;
-        
+        }
+
         if (FinalRuleName is "A") {
             acceptingRanges.Add(undecidedRange);
-        } else if (FinalRuleName is "R") {
-            rejectingRanges.Add(undecidedRange);
-        } else {
-            Debug.Assert(FinalInstruction is not null, "rule.NextRule is not null");
-            FinalInstruction!.CalculateForAllRules(acceptingRanges, rejectingRanges, undecidedRange);
+            Console.WriteLine($"{Indent}<-<-Final Rule A: Returning");
+            return;
         }
+
+        if (FinalRuleName is "R") {
+            rejectingRanges.Add(undecidedRange);
+            Console.WriteLine($"{Indent}<-<-Final Rule R: Returning");
+            return;
+        }
+
+        Debug.Assert(FinalInstruction is not null, "rule.NextRule is not null");
+        _indent++;
+        FinalInstruction!.CalculateForAllRules(acceptingRanges, rejectingRanges, undecidedRange);
+        _indent--;
+
+        Console.WriteLine($"{Indent}<-Returning");
         
     }
 }

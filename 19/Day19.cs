@@ -5,12 +5,12 @@ namespace d19y2023;
 
 public static class Day19 {
     private const long ExpectedResultTest1 = 19114;
-    private const long ExpectedResultTest2 = 0; // TODO replace
+    private const long ExpectedResultTest2 = 167409079868000L;
     private const string InputFileName = "inputDay19.txt";
     private const string TestFileName = "testInputDay19.txt";
     private static bool Test2Started => ExpectedResultTest2 != 0;
     
-    private const long ActualResult1 = 0; // For ensuring it stays correct, once the actual result is known
+    private const long ActualResult1 = 330820; // For ensuring it stays correct, once the actual result is known
     private const long ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
     
     private const string Success = "✅";
@@ -50,7 +50,7 @@ public static class Day19 {
         result2 = 0;
         
         var bothParts = File.ReadAllText(inputFileName).Split("\n\n").Select(part => part.Split('\n')).ToList();
-        var instructions = bothParts.First();
+        var instructionLines = bothParts.First();
         var input = bothParts.Last();
 
         const string instructionPattern = @"^(?'name'\w+)\{(?'rule'(?'part'[xmas])(?'than'[<>])(?'limit'\d+)\:(?'nextRule'\w+)\,)*(?'finalRule'\w+)\}$";
@@ -60,10 +60,9 @@ public static class Day19 {
         Console.WriteLine($"Input Regex: {inputPattern}");
         
         var allInstructions = new Dictionary<string, Instruction>();
-        
-        // instructions
-        for (int i = 0; i < instructions.Length; i++) {
-            var line = instructions[i];
+        // instruction parsing
+        for (int i = 0; i < instructionLines.Length; i++) {
+            var line = instructionLines[i];
             var mainMatch = Regex.Match(line, instructionPattern);
             Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(), $"Line {i} ({line}) does not match {mainMatch.Value}");
             
@@ -80,10 +79,22 @@ public static class Day19 {
             
             allInstructions[name] = new Instruction(name, rules, finalRuleName);
         }
+
+        // fill direct references in instructions and rules
+        foreach (var instructionPair in allInstructions) {
+            Debug.Assert(instructionPair.Key == instructionPair.Value.Name, "instructionPair.Key == instructionPair.Value.Name");
+            var instruction = instructionPair.Value;
+            foreach (var rule in instruction.Rules) {
+                if (rule.NextInstructionName is "A" or "R") continue;
+                rule.NextInstruction = allInstructions[rule.NextInstructionName];
+            }
+            if (instruction.FinalRuleName is not "A" and not "R") {
+                instruction.FinalInstruction = allInstructions[instruction.FinalRuleName];
+            }
+        }
         
         var allInputs = new List<Input>();
-        
-        // input
+        // input parsing
         for (int i = 0; i < input.Length; i++) {
             var line = input[i];
             var mainMatch = Regex.Match(line, inputPattern);
@@ -108,9 +119,83 @@ public static class Day19 {
                 result1 += inputLine.total;
             }
         }
+
+        var startInstruction = allInstructions["in"];
+        var acceptingRanges = new List<InputRange>();
+        var rejectingRanges = new List<InputRange>();
+        var undecidedRange = new InputRange();
+        
+        startInstruction.CalculateForAllRules(acceptingRanges, rejectingRanges, undecidedRange);
+
+        // Console.WriteLine($"Accepting ranges: ({acceptingRanges.Count}) {string.Join("; ", acceptingRanges)}");
+        // Console.WriteLine($"Rejecting ranges: ({rejectingRanges.Count}) {string.Join("; ", rejectingRanges)}");
+        
+        result2 = acceptingRanges.Sum(range => range.GetTotal());
         
     }
     
+}
+
+public class InputRange {
+    public const int LowerBound = 1;
+    public const int UpperBound = 4000;
+    
+    public Range X { get; private set; }
+    public Range M { get; private set; }
+    public Range A { get; private set; }
+    public Range S { get; private set; }
+
+    public bool IsAllEmpty => IsEmptyRangeX && IsEmptyRangeM && IsEmptyRangeA && IsEmptyRangeS;
+    private bool IsEmptyRangeX => X.Start.Value == X.End.Value && X.Start.Value < LowerBound || X.Start.Value > UpperBound;
+    private bool IsEmptyRangeM => M.Start.Value == M.End.Value && M.Start.Value < LowerBound || M.Start.Value > UpperBound;
+    private bool IsEmptyRangeA => A.Start.Value == A.End.Value && A.Start.Value < LowerBound || A.Start.Value > UpperBound;
+    private bool IsEmptyRangeS => S.Start.Value == S.End.Value && S.Start.Value < LowerBound || S.Start.Value > UpperBound;
+
+    public InputRange(Range x, Range m, Range a, Range s) {
+        X = x;
+        M = m;
+        A = a;
+        S = s;
+    }
+
+    public InputRange() {
+        X = new Range(LowerBound - 1, UpperBound + 1);
+        M = new Range(LowerBound - 1, UpperBound + 1);
+        A = new Range(LowerBound - 1, UpperBound + 1);
+        S = new Range(LowerBound - 1, UpperBound + 1);
+    }
+
+    public void SetRange(RulePart rulePart, Range newRange) {
+        switch (rulePart) {
+            case RulePart.x:
+                X = newRange;
+                break;
+            case RulePart.m:
+                M = newRange;
+                break;
+            case RulePart.a:
+                A = newRange;
+                break;
+            case RulePart.s:
+                S = newRange;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(rulePart), rulePart, null);
+        }
+    }
+    
+    public long GetTotal() {
+        var allRanges = new List<Range> {X, M, A, S};
+        var total = 1L;
+        foreach (var range in allRanges) {
+            total *= Math.Min(range.End.Value, UpperBound) - Math.Max(range.Start.Value, LowerBound) + 1;
+        }
+        return total;
+    }
+    
+    public override string ToString() {
+        return $"X: {X}, M: {M}, A: {A}, S: {S}";
+    }
 }
 
 public class Input {
@@ -134,6 +219,7 @@ public class Instruction {
     public string Name { get; }
     public List<Rule> Rules { get; }
     public string FinalRuleName { get; }
+    public Instruction? FinalInstruction { get; set; } // TODO set
     
     public Instruction(string name, List<Rule> rules, string finalRuleName) {
         Name = name;
@@ -151,11 +237,64 @@ public class Instruction {
                 _ => throw new ArgumentOutOfRangeException()
             };
             if (rule.SmallerThan && value < rule.Limit || !rule.SmallerThan && value > rule.Limit) {
-                return rule.NextRuleName;
+                return rule.NextInstructionName;
             }
         }
 
         return FinalRuleName;
+    }
+
+    public void CalculateForAllRules(List<InputRange> acceptingRanges, List<InputRange> rejectingRanges, InputRange undecidedRange) {
+        
+        foreach (var rule in Rules) {
+            if (undecidedRange.IsAllEmpty) {
+                return;
+            }
+
+            var relevantRange = rule.Part switch {
+                RulePart.x => undecidedRange.X,
+                RulePart.m => undecidedRange.M,
+                RulePart.a => undecidedRange.A,
+                RulePart.s => undecidedRange.S,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+            if (rule.Limit <= relevantRange.Start.Value && rule.SmallerThan || rule.Limit >= relevantRange.End.Value && !rule.SmallerThan) { // TODO < or <= ?
+                // rule is irrelevant
+                continue;
+            }
+            var lowerRange = new Range(relevantRange.Start.Value, rule.SmallerThan ? rule.Limit - 1 : rule.Limit);
+            var upperRange = new Range(rule.SmallerThan ? rule.Limit : rule.Limit + 1, relevantRange.End.Value);
+            var lowerInputRange = new InputRange(undecidedRange.X, undecidedRange.M, undecidedRange.A, undecidedRange.S);
+            lowerInputRange.SetRange(rule.Part, lowerRange);
+            var upperInputRange = new InputRange(undecidedRange.X, undecidedRange.M, undecidedRange.A, undecidedRange.S);
+            upperInputRange.SetRange(rule.Part, upperRange);
+            
+            undecidedRange = rule.SmallerThan ? upperInputRange : lowerInputRange;
+            var ruleRelevantRange = rule.SmallerThan ? lowerInputRange : upperInputRange;
+            
+            if (rule.NextInstructionName is "A") {
+                acceptingRanges.Add(undecidedRange);
+            } else if (rule.NextInstructionName is "R") {
+                rejectingRanges.Add(undecidedRange);
+            } else {
+                Debug.Assert(rule.NextInstruction is not null, "rule.NextRule is not null");
+                rule.NextInstruction!.CalculateForAllRules(acceptingRanges, rejectingRanges, ruleRelevantRange);
+            }
+            
+        }
+
+        if (undecidedRange.IsAllEmpty)
+            return;
+        
+        if (FinalRuleName is "A") {
+            acceptingRanges.Add(undecidedRange);
+        } else if (FinalRuleName is "R") {
+            rejectingRanges.Add(undecidedRange);
+        } else {
+            Debug.Assert(FinalInstruction is not null, "rule.NextRule is not null");
+            FinalInstruction!.CalculateForAllRules(acceptingRanges, rejectingRanges, undecidedRange);
+        }
+        
     }
 }
 
@@ -163,13 +302,14 @@ public class Rule {
     public RulePart Part { get; }
     public bool SmallerThan { get; }
     public int Limit { get; }
-    public string NextRuleName { get; }
-    
-    public Rule(RulePart part, bool smallerThan, int limit, string nextRuleName) {
+    public string NextInstructionName { get; }
+    public Instruction? NextInstruction { get; set; }
+
+    public Rule(RulePart part, bool smallerThan, int limit, string nextInstructionName) {
         Part = part;
         SmallerThan = smallerThan;
         Limit = limit;
-        NextRuleName = nextRuleName;
+        NextInstructionName = nextInstructionName;
     }
 }
 

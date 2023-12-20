@@ -1,18 +1,12 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
-namespace dxxyCurrYear; 
+namespace dxxyCurrYear;
 
-public static class Dayxx {
-    private const /*resultType*/int ExpectedResultTest1 = 0; // TODO replace
-    private const /*resultType*/int ExpectedResultTest2 = 0; // TODO replace
+public static partial class Dayxx {
     private const string InputFileName = "inputDayxx.txt";
-    private const string TestFileName = "testInputDayxx.txt";
-    private static bool Test2Started => ExpectedResultTest2 != 0;
-    
-    private const /*resultType*/int ActualResult1 = 0; // For ensuring it stays correct, once the actual result is known
-    private const /*resultType*/int ActualResult2 = 0; // For ensuring it stays correct, once the actual result is known
-    
+    private static bool Test2Started => Tests.Any(t => t.expectedResult2 != null);
+
     private const string Success = "✅";
     private const string Fail = "❌";
 
@@ -34,54 +28,37 @@ public static class Dayxx {
     
     [Conditional("DEBUG")]
     private static void TestRun() {
-        Solve(TestFileName, out var resultTest1, out var resultTest2);
-        PrintResult(resultTest1, ExpectedResultTest1, 1, true);
-        if (Test2Started)
-            PrintResult(resultTest2, ExpectedResultTest2, 2, true);
-        Console.WriteLine();
-
-        Debug.Assert(ExpectedResultTest1 != 0, "No expected result for test 1 set!");
-        Debug.Assert(ExpectedResultTest1 == resultTest1, "Test 1 failed!");
-        Debug.Assert(!Test2Started || ExpectedResultTest2 == resultTest2, "Test 2 failed!");
-    }
-
-    private static void Solve(string inputFileName, out /*resultType*/int result1, out /*resultType*/int result2) {
-        result1 = 0; 
-        result2 = 0;
-        
-        var allLines = File.ReadAllLines(inputFileName).ToList(); // .ToArray();
-        Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
-        var width = allLines[0].Length;
-        var height = allLines.Count; // .Length;
-        
-        // Process input char by char
-        for (int y = 0; y < height; y++) {
-            var line = allLines[y];
-            for (int x = 0; x < width; x++) {
-                var c = line[x];
-                // TODO your code here..
-            }
-        }
-
-        // Process input line by line with regex
-        const string singleInputName = "SingleInput";
-        const string singleInputPattern = @"\d+";
-        const string mainPattern = $@"InputLine \d+:(?:\s*(?'{singleInputName}'{singleInputPattern}),?)+";
-        // Regex for strings like "InputLine 1: 10,  2, 33,  4, 56, 78,  9"
-        Console.WriteLine($"Regex: {mainPattern}");
-        for (int i = 0; i < allLines.Count; i++) {
-            var line = allLines[i];
-            var mainMatch = Regex.Match(line, mainPattern);
-            Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(), $"Line {i} does not match {mainMatch.Value}");
-            var inputs = mainMatch.Groups[singleInputName].Captures.Select(c => /*resultType*/int.Parse(c.Value)).ToList();
+        var failed = 0;
+        Console.WriteLine("Running tests...");
+        Console.WriteLine("--------------------------------------------------");
+        foreach (var (testFileName, expectedResultTest1, expectedResultTest2) in Tests) {
+            Console.WriteLine($"Testing file: {testFileName}");
             
-            // TODO your code here..
-        }
+            Solve(testFileName, out var resultTest1, out var resultTest2);
+            if (expectedResultTest1 is not (null or 0)) {
+                PrintResult(resultTest1, expectedResultTest1.Value, 1, true);
+            }
+            else {
+                Console.WriteLine($"No expected result for test 1 set in {testFileName}!");
+                failed++;
+            }
 
+            if (Test2Started)
+                PrintResult(resultTest2, expectedResultTest2!.Value, 2, true);
+            
+            if (expectedResultTest1 != resultTest1) {
+                Console.WriteLine($"Test 1 failed in {testFileName}!");
+                failed++;
+            }
+            else if (Test2Started && expectedResultTest2 != resultTest2) {
+                Console.WriteLine($"Test 2 failed in {testFileName}!");
+                failed++;
+            }
+            Console.WriteLine("--------------------------------------------------");
+        }
         
+        Debug.Assert(ContinueIfTestsFail || failed == 0, $"Tests passed: {Tests.Count - failed}/{Tests.Count}");
         
-        
-        
+        Console.WriteLine();
     }
-    
 }

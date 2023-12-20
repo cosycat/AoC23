@@ -22,18 +22,15 @@ public static partial class Day20 {
         Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
         
         // Process input line by line with regex
-        const string singleInputName = "SingleInput";
-        const string singleInputPattern = @"\d+";
-        const string mainPattern = $@"InputLine \d+:(?:\s*(?'{singleInputName}'{singleInputPattern}),?)+";
+        const string name = @"((?<name>broadcaster)|(?'symbol'[%&])(?'name'\w+))";
+        const string mainPattern = $@"^{name}\s\-\>\s((?'destinations'\w+)(?:\,\s)?)+$";
         // Regex for strings like "InputLine 1: 10,  2, 33,  4, 56, 78,  9"
         Console.WriteLine($"Regex: {mainPattern}");
         for (int i = 0; i < allLines.Count; i++) {
             var line = allLines[i];
             var mainMatch = Regex.Match(line, mainPattern);
-            // Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(), $"Line {i} does not match {mainMatch.Value}");
-            var inputs = mainMatch.Groups[singleInputName].Captures.Select(c => long.Parse(c.Value)).ToList();
-
-            // TODO your code here..
+            Debug.Assert(mainMatch.Success && mainMatch.Value.Trim() == line.Trim(), $"Line {i} does not match {mainMatch.Value}");
+            
         }
     }
 }

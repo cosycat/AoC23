@@ -73,7 +73,7 @@ public static class Day18 {
         Dictionary<int, long> xSolver = new();
         Dictionary<int, long> ySolver = new();
         
-        var instructions2 = new List<(Direction direction, int distance)>();
+        var instructions2 = new List<(Direction direction, long distance)>();
 
         for (int i = 0; i < allLines.Count; i++) {
             var line = allLines[i];
@@ -116,13 +116,89 @@ public static class Day18 {
         
         
         // PART 2
-        List<(int startX, int endX)> xRanges = new();
-        (long x, long y) currPos2 = (0, 0);
+        List<int> xRanges = new();
+        List<int> yRanges = new();
+        xRanges.Add(0);
+        yRanges.Add(0);
+        
+        (int x, int y) currPos2 = (0, 0);
 
         for (int i = 0; i < instructions2.Count; i++) {
-            var instruction = instructions2[i];
+            DigInDirection(map2, currPos2, instructions2[i].direction, instructions2[i].distance, xRanges, yRanges);
         }
         
+    }
+
+    private static (int x, int y) DigInDirection(List<List<Tile>> map, (int x, int y) currPos, Direction direction, long distance, List<int> xRanges, List<int> yRanges) {
+        (int x, int y) newPos;
+        switch (direction) {
+            case Direction.Up:
+                if (map[currPos.y][currPos.x].FilledFrom == Direction.Left ||
+                    map[currPos.y][currPos.x].FilledFrom == Direction.Right) {
+                    map[currPos.y][currPos.x].FilledFrom = direction;
+                }
+                newPos = (currPos.x, currPos.y - 1);
+                break;
+            case Direction.Down:
+                if (map[currPos.y][currPos.x].FilledFrom == Direction.Left ||
+                    map[currPos.y][currPos.x].FilledFrom == Direction.Right) {
+                    map[currPos.y][currPos.x].FilledFrom = direction;
+                }
+                newPos = (currPos.x, currPos.y + 1);
+                break;
+            case Direction.Left:
+                // if (map[currPos.y][currPos.x].FilledFrom == Direction.Up ||
+                //     map[currPos.y][currPos.x].FilledFrom == Direction.Down) {
+                //     map[currPos.y][currPos.x].FilledFrom = direction;
+                // }
+                newPos = (currPos.x - 1, currPos.y);
+                break;
+            case Direction.Right:
+                // if (map[currPos.y][currPos.x].FilledFrom == Direction.Up ||
+                //     map[currPos.y][currPos.x].FilledFrom == Direction.Down) {
+                //     map[currPos.y][currPos.x].FilledFrom = direction;
+                // }
+                newPos = (currPos.x + 1, currPos.y);
+                break;
+            default:
+                throw new Exception($"Unknown direction {direction}");
+        }
+
+        if (newPos.y < 0) {
+            map.Insert(0, new List<Tile>());
+            for (int i = 0; i < map[1].Count; i++) {
+                map[0].Add(new Tile(false));
+            }
+            newPos.y = 0;
+        }
+        if (newPos.x < 0) {
+            for (int i = 0; i < map.Count; i++) {
+                map[i].Insert(0, new Tile(false));
+            }
+            newPos.x = 0;
+        }
+        if (newPos.y >= map.Count) {
+            map.Add(new List<Tile>());
+            for (int i = 0; i < map[0].Count; i++) {
+                map[^1].Add(new Tile(false));
+            }
+        }
+        if (newPos.x >= map[0].Count) {
+            for (int i = 0; i < map.Count; i++) {
+                map[i].Add(new Tile(false));
+            }
+        }
+        
+        xRanges
+        
+        map[newPos.y][newPos.x].IsDug = true;
+        if (map[newPos.y][newPos.x].FilledFrom == Direction.None ||
+            map[newPos.y][newPos.x].FilledFrom == Direction.Up ||
+            map[newPos.y][newPos.x].FilledFrom == Direction.Down) {
+            map[newPos.y][newPos.x].FilledFrom = direction;
+        }
+
+        return newPos;
     }
 
     private static long CountInside(List<List<Tile>> map1) {
@@ -186,76 +262,6 @@ public static class Day18 {
         
         result1 = map1.Sum(row => row.Count(tile => tile.IsDug));
         return result1;
-    }
-
-    private static (int x, int y) DigInDirection(List<List<Tile>> map, (int x, int y) currPos, Direction direction) {
-        (int x, int y) newPos;
-        switch (direction) {
-            case Direction.Up:
-                if (map[currPos.y][currPos.x].FilledFrom == Direction.Left ||
-                    map[currPos.y][currPos.x].FilledFrom == Direction.Right) {
-                    map[currPos.y][currPos.x].FilledFrom = direction;
-                }
-                newPos = (currPos.x, currPos.y - 1);
-                break;
-            case Direction.Down:
-                if (map[currPos.y][currPos.x].FilledFrom == Direction.Left ||
-                    map[currPos.y][currPos.x].FilledFrom == Direction.Right) {
-                    map[currPos.y][currPos.x].FilledFrom = direction;
-                }
-                newPos = (currPos.x, currPos.y + 1);
-                break;
-            case Direction.Left:
-                // if (map[currPos.y][currPos.x].FilledFrom == Direction.Up ||
-                //     map[currPos.y][currPos.x].FilledFrom == Direction.Down) {
-                //     map[currPos.y][currPos.x].FilledFrom = direction;
-                // }
-                newPos = (currPos.x - 1, currPos.y);
-                break;
-            case Direction.Right:
-                // if (map[currPos.y][currPos.x].FilledFrom == Direction.Up ||
-                //     map[currPos.y][currPos.x].FilledFrom == Direction.Down) {
-                //     map[currPos.y][currPos.x].FilledFrom = direction;
-                // }
-                newPos = (currPos.x + 1, currPos.y);
-                break;
-            default:
-                throw new Exception($"Unknown direction {direction}");
-        }
-
-        if (newPos.y < 0) {
-            map.Insert(0, new List<Tile>());
-            for (int i = 0; i < map[1].Count; i++) {
-                map[0].Add(new Tile(false));
-            }
-            newPos.y = 0;
-        }
-        if (newPos.x < 0) {
-            for (int i = 0; i < map.Count; i++) {
-                map[i].Insert(0, new Tile(false));
-            }
-            newPos.x = 0;
-        }
-        if (newPos.y >= map.Count) {
-            map.Add(new List<Tile>());
-            for (int i = 0; i < map[0].Count; i++) {
-                map[^1].Add(new Tile(false));
-            }
-        }
-        if (newPos.x >= map[0].Count) {
-            for (int i = 0; i < map.Count; i++) {
-                map[i].Add(new Tile(false));
-            }
-        }
-        
-        map[newPos.y][newPos.x].IsDug = true;
-        if (map[newPos.y][newPos.x].FilledFrom == Direction.None ||
-            map[newPos.y][newPos.x].FilledFrom == Direction.Up ||
-            map[newPos.y][newPos.x].FilledFrom == Direction.Down) {
-            map[newPos.y][newPos.x].FilledFrom = direction;
-        }
-
-        return newPos;
     }
 
     private static void PrintMap(List<List<Tile>> map) {

@@ -25,8 +25,8 @@ public static partial class Day20 {
         const string mainPattern = $@"^{name}\s\-\>\s((?'destinations'\w+)(?:\,\s)?)+$";
         Console.WriteLine($"Regex: {mainPattern}");
 
-        var broadcastInstructionNames = new List<string>();
         var allInstructions = new Dictionary<string, Instruction>();
+        Instruction? broadcastInstruction = null;
         for (int i = 0; i < allLines.Count; i++) {
             var line = allLines[i];
             var mainMatch = Regex.Match(line, mainPattern);
@@ -35,7 +35,7 @@ public static partial class Day20 {
             var outgoingInstructionNames = mainMatch.Groups["destinations"].Captures.Select(c => c.Value).ToList();
             
             if (mainMatch.Groups["broadcaster"].Success) {
-                broadcastInstructionNames.AddRange(outgoingInstructionNames);
+                broadcastInstruction = new Instruction(InstructionType.Broadcast, outgoingInstructionNames);
                 continue;
             }
 
@@ -50,18 +50,26 @@ public static partial class Day20 {
             
             allInstructions.Add(instructionName, instruction);
         }
+        Debug.Assert(broadcastInstruction != null);
 
         foreach (var instruction in allInstructions.Values) {
             instruction.Init(allInstructions);
         }
+        broadcastInstruction.Init(allInstructions);
 
-        var repetitions = 4;
+        var repetitions = 1000;
         var highPulseCount = 0L;
         var lowPulseCount = 0L;
         for (int i = 0; i < repetitions; i++) {
             Instruction.ResetCount();
-            foreach (var broadcastInstructionName in broadcastInstructionNames) {
-                allInstructions[broadcastInstructionName].DoInstruction(Pulse.Low, new Instruction(InstructionType.Broadcast, new List<string>(0)));
+            var nextPulses = new List<(Instruction next, Pulse pulse, Instruction sender)>();
+            nextPulses.Add((broadcastInstruction, Pulse.Low, null));
+            while (nextPulses.Count > 0) {
+                var newPulses = new List<(Instruction next, Pulse pulse, Instruction sender)>();
+                foreach (var (next, pulse, sender) in nextPulses) {
+                    newPulses.AddRange(next.DoInstruction(pulse, sender));
+                }
+                nextPulses = newPulses;
             }
             highPulseCount += Instruction.HighPulseCount;
             lowPulseCount += Instruction.LowPulseCount;
@@ -88,7 +96,7 @@ public class Instruction {
                 DoInstruction = DoInstructionSink;
                 break;
             case InstructionType.Broadcast:
-                DoInstruction = (_, _) => throw new Exception();
+                DoInstruction = DoInstructionBroadcast;
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -105,26 +113,29 @@ public class Instruction {
     
     private InstructionType InstructionType { get; }
 
-    public readonly Action<Pulse, Instruction> DoInstruction;
+    public readonly Func<Pulse, Instruction, List<(Instruction next, Pulse pulse, Instruction sender)>> DoInstruction;
 
     public static long LowPulseCount { get; private set; } = 1; // one from the button
     public static long HighPulseCount { get; private set; } = 0;
 
-    private void DoInstructionFlipFlop(Pulse pulse, Instruction sender) {
+    private List<(Instruction next, Pulse pulse, Instruction sender)> DoInstructionFlipFlop(Pulse pulse, Instruction sender) {
         CountPulse(pulse);
         
         if (pulse == Pulse.High) {
             // Console.WriteLine("<-End");
-            return;
+            return new List<(Instruction next, Pulse pulse, Instruction sender)>();
         }
 
         State = !State;
+        
+        var nextPulses = new List<(Instruction next, Pulse pulse, Instruction sender)>();
         foreach (var outgoingInstruction in OutgoingInstructions) {
-            outgoingInstruction.DoInstruction(State ? Pulse.High : Pulse.Low, this);
+            nextPulses.Add((outgoingInstruction, State ? Pulse.High : Pulse.Low, this));
         }
+        return nextPulses;
     }
 
-    private void DoInstructionConjunction(Pulse pulse, Instruction sender) {
+    private List<(Instruction next, Pulse pulse, Instruction sender)> DoInstructionConjunction(Pulse pulse, Instruction sender) {
         CountPulse(pulse);
 
         Debug.Assert(IncomingInstructions.ContainsKey(sender), $"Sender missing!");
@@ -137,15 +148,26 @@ public class Instruction {
             break;
         }
 
+        var nextPulses = new List<(Instruction next, Pulse pulse, Instruction sender)>();
         foreach (var outgoingInstruction in OutgoingInstructions) {
-            outgoingInstruction.DoInstruction(pulseToSend, this);
+            nextPulses.Add((outgoingInstruction, pulseToSend, this));
         }
+        return nextPulses;
         
     }
 
-    private void DoInstructionSink(Pulse pulse, Instruction sender) {
+    private List<(Instruction next, Pulse pulse, Instruction sender)> DoInstructionSink(Pulse pulse, Instruction sender) {
         CountPulse(pulse);
         // Console.WriteLine("<-End");
+        return new List<(Instruction next, Pulse pulse, Instruction sender)>();
+    }
+
+    private List<(Instruction next, Pulse pulse, Instruction sender)> DoInstructionBroadcast(Pulse pulse, Instruction sender) {
+        var nextPulses = new List<(Instruction next, Pulse pulse, Instruction sender)>();
+        foreach (var outgoingInstruction in OutgoingInstructions) {
+            nextPulses.Add((outgoingInstruction, pulse, this));
+        }
+        return nextPulses;
     }
 
     private static void CountPulse(Pulse pulse) {

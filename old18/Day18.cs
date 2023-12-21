@@ -54,7 +54,6 @@ public static class Day18 {
         Debug.Assert(allLines.Count > 0, $"Input file {inputFileName} is empty!");
 
         // Process input line by line with regex
-        const string colorCode = @"";
         const string mainPattern = @"(?<direction>[UDLR])\s(?<distance>\d+)\s\(#(?<distance2>[0-9a-f]{5})(?<direction2>[0-9a-f])\)";
         // Regex for strings like "InputLine 1: 10,  2, 33,  4, 56, 78,  9"
         Console.WriteLine($"Regex: {mainPattern}");

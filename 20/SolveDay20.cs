@@ -9,7 +9,7 @@ public static partial class Day20 {
         ("testInputDay20_2.txt", 11687500, null),
     };
 
-    private const /*resultType*/ int ActualResult1 = 0; // TODO replace
+    private const /*resultType*/ int ActualResult1 = 825167435;
     private const /*resultType*/ int ActualResult2 = 0; // TODO replace
     
     private const bool ContinueIfTestsFail = false;
@@ -35,7 +35,7 @@ public static partial class Day20 {
             var outgoingInstructionNames = mainMatch.Groups["destinations"].Captures.Select(c => c.Value).ToList();
             
             if (mainMatch.Groups["broadcaster"].Success) {
-                broadcastInstruction = new Instruction(InstructionType.Broadcast, outgoingInstructionNames);
+                broadcastInstruction = new Instruction(InstructionType.Broadcast, outgoingInstructionNames, "broadcaster");
                 continue;
             }
 
@@ -46,7 +46,7 @@ public static partial class Day20 {
             };
             var instructionName = mainMatch.Groups["name"].Value;
 
-            var instruction = new Instruction(instructionType, outgoingInstructionNames);
+            var instruction = new Instruction(instructionType, outgoingInstructionNames, instructionName);
             
             allInstructions.Add(instructionName, instruction);
         }
@@ -57,7 +57,7 @@ public static partial class Day20 {
         }
         broadcastInstruction.Init(allInstructions);
 
-        var repetitions = 1000;
+        var repetitions = 10000000000L;
         var highPulseCount = 0L;
         var lowPulseCount = 0L;
         for (int i = 0; i < repetitions; i++) {
@@ -73,17 +73,47 @@ public static partial class Day20 {
             }
             highPulseCount += Instruction.HighPulseCount;
             lowPulseCount += Instruction.LowPulseCount;
-            Console.WriteLine($"{i} HighPulses: {Instruction.HighPulseCount}, LowPulses: {Instruction.LowPulseCount}");
+            // Console.WriteLine($"{i} HighPulses: {Instruction.HighPulseCount}, LowPulses: {Instruction.LowPulseCount}");
+
+            if (Instruction.ReachedRXModule && result2 == 0) {
+                result2 = i;
+                break;
+            }
+            if (i == 999 && result1 == 0) {
+                result1 = highPulseCount * lowPulseCount;
+            }
         }
         
         // Console.WriteLine($"HighPulses: {highPulseCount}, LowPulses: {lowPulseCount}");
-        result1 = highPulseCount * lowPulseCount;
+        
     }
 }
 
 public class Instruction {
-    public Instruction(InstructionType instructionType, List<string> outgoingInstructionNames) {
+    public string Name { get; private set; }
+    private List<Instruction> OutgoingInstructions { get; } = new();
+
+    private List<string> OutgoingInstructionNames { get; }
+
+    // Conjunction Only
+    private Dictionary<Instruction, Pulse> IncomingInstructions { get; } = new();
+
+    // FlipFlop Only
+    private bool State { get; set; } = false;
+
+    private InstructionType InstructionType { get; }
+
+    public readonly Func<Pulse, Instruction, List<(Instruction next, Pulse pulse, Instruction sender)>> DoInstruction;
+
+    public static long LowPulseCount { get; private set; } = 1; // one from the button
+
+    public static long HighPulseCount { get; private set; } = 0;
+
+    public static bool ReachedRXModule { get; private set; } = false;
+
+    public Instruction(InstructionType instructionType, List<string> outgoingInstructionNames, string name) {
         OutgoingInstructionNames = outgoingInstructionNames;
+        Name = name;
         InstructionType = instructionType;
         switch (instructionType) {
             case InstructionType.FlipFlop:
@@ -102,21 +132,6 @@ public class Instruction {
                 throw new ArgumentOutOfRangeException();
         }
     }
-
-    private List<Instruction> OutgoingInstructions { get; } = new();
-    private List<string> OutgoingInstructionNames { get; }
-    
-    // Conjunction Only
-    private Dictionary<Instruction, Pulse> IncomingInstructions { get; } = new();
-    // FlipFlop Only
-    private bool State { get; set; } = false;
-    
-    private InstructionType InstructionType { get; }
-
-    public readonly Func<Pulse, Instruction, List<(Instruction next, Pulse pulse, Instruction sender)>> DoInstruction;
-
-    public static long LowPulseCount { get; private set; } = 1; // one from the button
-    public static long HighPulseCount { get; private set; } = 0;
 
     private List<(Instruction next, Pulse pulse, Instruction sender)> DoInstructionFlipFlop(Pulse pulse, Instruction sender) {
         CountPulse(pulse);
@@ -170,7 +185,7 @@ public class Instruction {
         return nextPulses;
     }
 
-    private static void CountPulse(Pulse pulse) {
+    private void CountPulse(Pulse pulse) {
         // Console.WriteLine($"Count Pulse {pulse}");
         switch (pulse) {
             case Pulse.High:
@@ -178,6 +193,9 @@ public class Instruction {
                 break;
             case Pulse.Low:
                 LowPulseCount++;
+                if (Name == "rx") {
+                    ReachedRXModule = true;
+                }
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(pulse), pulse, null);
@@ -187,7 +205,7 @@ public class Instruction {
     public void Init(Dictionary<string,Instruction> allInstructions) {
         foreach (var outgoingInstructionName in OutgoingInstructionNames) {
             if (!allInstructions.TryGetValue(outgoingInstructionName, out var outgoingInstruction)) {
-                outgoingInstruction = new Instruction(InstructionType.Sink, new List<string>(0));
+                outgoingInstruction = new Instruction(InstructionType.Sink, new List<string>(0), outgoingInstructionName);
             }
             OutgoingInstructions.Add(outgoingInstruction);
             outgoingInstruction.IncomingInstructions[this] = Pulse.Low;

@@ -107,6 +107,8 @@ public class Grid {
             // hor
             var xDiff = b.x - c.x;
         }
+
+        throw new NotImplementedException();
     }
 }
 

@@ -8,8 +8,8 @@ public static partial class Dayxx {
         ("testInputDayxx_00.txt", null, null) // TODO replace
     };
 
-    private const /*resultType*/ int ActualResult1 = 0; // TODO replace
-    private const /*resultType*/ int ActualResult2 = 0; // TODO replace
+    private const /*resultType*/int ActualResult1 = 0; // TODO replace
+    private const /*resultType*/int ActualResult2 = 0; // TODO replace
     
     private const bool ContinueIfTestsFail = false;
 

@@ -9,7 +9,7 @@ public static partial class Day22 {
     };
 
     private const long ActualResult1 = 439;
-    private const long ActualResult2 = 0; // TODO replace
+    private const long ActualResult2 = 43056;
     
     private const bool ContinueIfTestsFail = false;
 

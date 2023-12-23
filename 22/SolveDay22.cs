@@ -5,7 +5,7 @@ namespace d22y2023;
 
 public static partial class Day22 {
     private static readonly List<(string fileName, long? expectedResult1, long? expectedResult2)> Tests = new() {
-        ("testInputDay22_00.txt", 5, null)
+        ("testInputDay22_00.txt", 5, 7)
     };
 
     private const long ActualResult1 = 439;
@@ -88,10 +88,14 @@ public static partial class Day22 {
         PrintGrid(bricksGrid, Rotation.Z);
 
         foreach (var brick in bricks) {
-            if (!brick.IsSingleSupportingBrick()) {
+            if (!brick.IsSingleSupportingBrick(out _)) {
                 // Console.WriteLine($"Brick {brick.Name} is not single supporting!");
                 result1++;
             }
+
+            var fallingBricks = brick.BricksThatWouldFallIfRemoved(new HashSet<Brick>());
+            Console.WriteLine($"Brick {brick.Name} would cause {string.Join(", ", fallingBricks.Select(b => b.Name.ToString()))} to fall if removed!");
+            result2 += fallingBricks.Count;
         }
     }
     
@@ -201,18 +205,64 @@ public class Brick {
         
         return true;
     }
+    
+    public HashSet<Brick> BricksThatWouldFallIfRemoved(HashSet<Brick> bricksThatAlsoFall) {
+        if (!IsSingleSupportingBrick(out var bricksThatWouldFallDirectly)) {
+            Debug.Assert(bricksThatWouldFallDirectly.Count == 0, $"Brick {Name} is not single supporting, but {string.Join(", ", bricksThatWouldFallDirectly.Select(b => b.Name.ToString()))} would fall!");
+        }
+        
+        var bricksThatWouldFallIfRemoved = new HashSet<Brick>();
+        foreach (var fallingBrick in bricksThatWouldFallDirectly) {
+            bricksThatWouldFallIfRemoved.Add(fallingBrick);
+            bricksThatWouldFallIfRemoved.UnionWith(fallingBrick.BricksThatWouldFallIfRemoved(new HashSet<Brick>()));
+        }
+        bricksThatWouldFallIfRemoved.UnionWith(bricksThatAlsoFall);
 
-    public bool IsSingleSupportingBrick() {
+        var foundNewBricksToFall = true;
+        while (foundNewBricksToFall) {
+            foundNewBricksToFall = false;
+            var newBricksToFall = new HashSet<Brick>();
+            foreach (var fallingBrick in bricksThatWouldFallIfRemoved) {
+                foreach (var brickAbove in fallingBrick.BricksAbove) {
+                    if (bricksThatWouldFallIfRemoved.Contains(brickAbove)) {
+                        continue;
+                    }
+                    if (brickAbove.IsSupportedByOnly(bricksThatWouldFallIfRemoved)) {
+                        newBricksToFall.Add(brickAbove);
+                        foundNewBricksToFall = true;
+                    }
+                }
+            }
+            bricksThatWouldFallIfRemoved.UnionWith(newBricksToFall);
+        }
+        
+        return bricksThatWouldFallIfRemoved;
+    }
+
+    public bool IsSupportedByOnly(HashSet<Brick> bricks) {
+        foreach (var brick in BricksBelow) {
+            if (brick.EndCoords.Y != StartCoords.Y - 1) {
+                continue;
+            }
+            if (!bricks.Contains(brick)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public bool IsSingleSupportingBrick(out List<Brick> bricksThatWouldFall) {
+        bricksThatWouldFall = new List<Brick>();
         foreach (var brickAbove in BricksAbove) {
-            if (brickAbove == null || brickAbove.StartCoords.Y - 1 != EndCoords.Y) {
+            if (brickAbove.StartCoords.Y - 1 != EndCoords.Y) {
                 continue;
             }
             if (brickAbove.SupportCount() == 1) {
-                return true;
+                bricksThatWouldFall.Add(brickAbove);
             }
         }
 
-        return false;
+        return bricksThatWouldFall.Count > 0;
     }
 
     private int SupportCount() {
